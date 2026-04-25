@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Ancient Greece Fishing Challenge</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Exo+2:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+/* RESET */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#f5c842;--dgold:#b8860b;
+  --common:#4ade80;--uncommon:#60a5fa;--rare:#c084fc;--legendary:#fb923c;
+  --panel:rgba(6,10,22,0.97);--hud:rgba(3,6,16,0.95);
+}
+body{font-family:'Exo 2',sans-serif;background:#050c1a;color:#eee;height:100vh;overflow:hidden;user-select:none}
+.screen{display:none;width:100vw;height:100vh;position:absolute;top:0;left:0}
+.screen.active{display:flex}
+
+/* ── TITLE ── */
+#s-title{flex-direction:column;align-items:center;justify-content:center;
+  background:url('map.png') center/cover no-repeat;position:relative}
+#s-title::before{content:'';position:absolute;inset:0;background:rgba(3,7,18,0.72)}
+.title-z{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:20px}
+.title-card{background:linear-gradient(135deg,#071a3a,#0f2d16);border:2px solid var(--gold);
+  border-radius:20px;padding:30px 52px;text-align:center;box-shadow:0 0 60px rgba(245,200,66,0.2)}
+.t-eye{font-family:'Orbitron',monospace;font-size:.7rem;letter-spacing:6px;color:var(--gold);margin-bottom:8px}
+.t-main{font-family:'Cinzel',serif;font-size:3rem;font-weight:900;color:#fff;line-height:1.1;
+  text-shadow:0 0 30px rgba(245,200,66,0.4)}
+.t-main span{color:var(--gold)}
+.t-sub{font-family:'Orbitron',monospace;font-size:.6rem;letter-spacing:4px;color:#64748b;margin-top:6px}
+.entry{display:flex;flex-direction:column;gap:10px;align-items:center;width:360px}
+.entry label{font-family:'Orbitron',monospace;font-size:.62rem;letter-spacing:4px;color:var(--gold)}
+.entry input{width:100%;background:rgba(255,255,255,.07);border:2px solid #1e3a5f;border-radius:8px;
+  padding:12px 16px;font-family:'Exo 2',sans-serif;font-size:1.1rem;color:#fff;text-align:center;
+  outline:none;transition:border-color .2s}
+.entry input:focus{border-color:var(--gold)}
+.prow{display:flex;gap:8px;width:100%}
+.pbtn{flex:1;padding:10px 4px;border:2px solid #1e2d40;border-radius:8px;background:rgba(255,255,255,.04);
+  color:#475569;font-family:'Orbitron',monospace;font-size:.58rem;letter-spacing:1px;cursor:pointer;transition:all .2s}
+.pbtn.sel{border-color:var(--gold);background:rgba(245,200,66,.12);color:var(--gold)}
+.gbtn{background:linear-gradient(135deg,#92400e,var(--gold));border:none;border-radius:10px;
+  padding:16px 52px;font-family:'Orbitron',monospace;font-size:.85rem;font-weight:700;
+  color:#0a0f1a;cursor:pointer;letter-spacing:3px;transition:transform .15s,box-shadow .15s;
+  box-shadow:0 4px 20px rgba(245,200,66,.35)}
+.gbtn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 30px rgba(245,200,66,.5)}
+.gbtn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+
+/* ── LOCATION ── */
+#s-location{flex-direction:column;align-items:center;justify-content:center;
+  background:url('map.png') center/cover no-repeat;position:relative}
+#s-location::before{content:'';position:absolute;inset:0;background:rgba(3,7,18,.82)}
+.loc-z{position:relative;z-index:2;width:100%;display:flex;flex-direction:column;align-items:center;gap:14px;padding:16px}
+.loc-h{font-family:'Cinzel',serif;font-size:1.6rem;color:var(--gold);letter-spacing:3px}
+.loc-sh{font-family:'Orbitron',monospace;font-size:.58rem;letter-spacing:4px;color:#475569}
+.loc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;max-width:1080px}
+.loc-card{background:var(--panel);border:2px solid #1e2d40;border-radius:14px;overflow:hidden;cursor:pointer;transition:all .2s}
+.loc-card:hover{border-color:#3a5a7a;transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.loc-card.sel{border-color:var(--gold);box-shadow:0 0 20px rgba(245,200,66,.25)}
+.loc-thumb{position:relative;height:80px;overflow:hidden;background:#0a1628}
+.loc-thumb video{width:100%;height:100%;object-fit:cover;display:block}
+.loc-badge{position:absolute;top:5px;right:5px;font-family:'Orbitron',monospace;font-size:.52rem;
+  font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid;letter-spacing:1px}
+.loc-info{padding:8px 10px}
+.loc-name{font-family:'Cinzel',serif;font-size:.85rem;color:#e2e8f0}
+.loc-stars{font-size:.62rem;margin:2px 0}
+.loc-desc{font-size:.65rem;color:#475569;line-height:1.3}
+.loc-lb{margin-top:4px}
+.loc-lb-row{display:flex;gap:4px;font-size:.62rem;align-items:center}
+.loc-lb-rank{color:var(--gold);font-family:'Orbitron',monospace;width:14px;font-weight:700}
+.loc-lb-name{flex:1;color:#64748b;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.loc-lb-score{color:var(--gold);font-weight:700}
+
+/* ── GAME SCREEN ── */
+#s-game{flex-direction:column;position:relative;overflow:hidden}
+#game-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.g-vignette{position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(3,7,18,.65) 0%,transparent 20%,transparent 65%,rgba(3,7,18,.8) 100%)}
+.scanlines{position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px)}
+/* HUD */
+.hud{position:absolute;top:0;left:0;right:0;z-index:10;display:flex;align-items:stretch;
+  background:var(--hud);border-bottom:2px solid rgba(245,200,66,.25);font-family:'Orbitron',monospace;
+  backdrop-filter:blur(8px)}
+.hud-blk{display:flex;flex-direction:column;justify-content:center;padding:8px 18px;
+  border-right:1px solid rgba(255,255,255,.06)}
+.hud-blk:last-child{border-right:none}
+.hud-lbl{font-size:.46rem;letter-spacing:3px;color:#334155;margin-bottom:2px;text-transform:uppercase}
+.hud-val{font-size:1.05rem;color:#fff;letter-spacing:1px}
+.hud-val.gold{color:var(--gold);text-shadow:0 0 10px rgba(245,200,66,.4)}
+.hud-val.green{color:#4ade80}
+.hud-center{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:6px 16px}
+.hud-loc{font-family:'Cinzel',serif;font-size:1.05rem;color:var(--gold);letter-spacing:3px;
+  text-shadow:0 0 14px rgba(245,200,66,.4)}
+.hud-cast{font-size:.5rem;letter-spacing:3px;color:#60a5fa;margin-top:2px}
+.hud-hearts{display:flex;gap:5px;align-items:center}
+.heart{font-size:1.3rem;transition:all .3s;filter:drop-shadow(0 0 5px rgba(220,38,38,.6))}
+.heart.lost{filter:grayscale(1) brightness(.3)}
+.hud-btn{padding:7px 12px;border:1px solid;border-radius:8px;font-family:'Orbitron',monospace;
+  font-size:.56rem;cursor:pointer;letter-spacing:2px;transition:all .2s;white-space:nowrap;background:none}
+.hud-btn.gold-btn{border-color:var(--dgold);color:var(--gold);background:linear-gradient(135deg,#78350f,#b45309)}
+.hud-btn.gold-btn:hover{background:linear-gradient(135deg,#b45309,var(--gold));color:#0a0f1a}
+.hud-btn.green-btn{border-color:#4ade80;color:#4ade80;background:linear-gradient(135deg,#1a3a1a,#2d5a2d)}
+.hud-btn.green-btn:hover{background:#4ade80;color:#0a0f1a}
+.hud-btn.locked{opacity:.4;cursor:not-allowed}
+/* Sidebar */
+.sidebar{position:absolute;right:16px;top:72px;z-index:10;background:rgba(3,6,16,.9);
+  border:1px solid rgba(245,200,66,.2);border-radius:14px;padding:12px 14px;width:200px;
+  font-family:'Orbitron',monospace;backdrop-filter:blur(8px)}
+.sb-title{font-size:.46rem;letter-spacing:3px;color:#334155;margin-bottom:8px;text-transform:uppercase}
+.sb-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;font-size:.68rem}
+.sb-rank{width:18px;font-weight:700}
+.sb-rank.r1{color:#ffd700}.sb-rank.r2{color:#c0c0c0}.sb-rank.r3{color:#cd7f32}
+.sb-name{flex:1;color:#94a3b8;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+  font-family:'Exo 2',sans-serif;font-size:.72rem}
+.sb-score{color:var(--gold);font-weight:700}
+/* Bottom */
+.bottom{position:absolute;bottom:0;left:0;right:0;z-index:10;display:flex;align-items:flex-end;
+  gap:14px;padding:14px 16px;
+  background:linear-gradient(0deg,rgba(3,6,16,.95) 0%,rgba(3,6,16,.7) 70%,transparent 100%)}
+/* Cast panel */
+.cast-panel{background:rgba(4,8,20,.92);border:1px solid rgba(30,74,122,.9);border-top:2px solid #1e4a7a;
+  border-radius:16px;padding:12px;width:320px;flex-shrink:0;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.water{height:200px;border-radius:10px;border:1px solid #0e3a6a;position:relative;overflow:hidden;cursor:pointer;
+  background:#040810}
+#lure-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:block;min-width:100%;min-height:100%}
+.water-vignette{position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 35%,rgba(3,8,20,.65) 100%)}
+.wline{position:absolute;height:2px;left:0;right:0;
+  background:linear-gradient(90deg,transparent,rgba(125,211,252,.45),transparent);animation:wl 3s linear infinite;z-index:2}
+.wline:nth-child(3){top:35%;animation-delay:0s}
+.wline:nth-child(4){top:55%;animation-delay:1s;opacity:.5}
+.wline:nth-child(5){top:72%;animation-delay:2s;opacity:.3}
+@keyframes wl{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.cta{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.cta-icon{font-size:2.8rem;animation:bob 1.5s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.cta-txt{font-family:'Orbitron',monospace;font-size:.62rem;letter-spacing:4px;color:#475569}
+.dots{display:flex;gap:7px}
+.dots span{width:8px;height:8px;border-radius:50%;background:#1e6baa;animation:dp 1.4s ease-in-out infinite}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes dp{0%,80%,100%{transform:scale(.6);opacity:.3}40%{transform:scale(1);opacity:1}}
+.bite-flash{font-family:'Orbitron',monospace;font-size:1.1rem;color:#fbbf24;letter-spacing:3px;
+  animation:bf .45s ease-in-out infinite alternate;text-shadow:0 0 20px rgba(251,191,36,.6)}
+@keyframes bf{from{opacity:1}to{opacity:.3}}
+.cast-btn{width:100%;margin-top:10px;padding:13px;background:linear-gradient(135deg,#0a2040,#1050a0);
+  border:1px solid #2060c0;border-radius:10px;color:#7dd3fc;font-family:'Orbitron',monospace;
+  font-size:.7rem;letter-spacing:3px;cursor:pointer;transition:all .2s}
+.cast-btn:hover:not(:disabled){background:linear-gradient(135deg,#1050a0,#1d4ed8);border-color:#60a5fa}
+.cast-btn:disabled{opacity:.35;cursor:not-allowed}
+/* Last catch */
+.catch-panel{flex:1;background:rgba(4,8,20,.92);border:1px solid rgba(245,200,66,.18);
+  border-top:2px solid rgba(245,200,66,.3);border-radius:16px;padding:12px;
+  display:flex;flex-direction:column;gap:8px}
+#lc-vid{width:100%;height:185px;border-radius:10px;overflow:hidden;border:1px solid #1e2d40;
+  background:#040810;display:flex;align-items:center;justify-content:center}
+#lc-vid video{width:100%;height:100%;object-fit:cover;display:block}
+.lc-bottom{display:flex;align-items:center;justify-content:space-between;padding:0 2px}
+.lc-lbl{font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:3px;color:#334155}
+.lc-name{font-family:'Cinzel',serif;font-size:1rem;color:#e2e8f0}
+.lc-right{text-align:right}
+.lc-rar{font-size:.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.lc-pts{font-family:'Orbitron',monospace;font-size:1rem;color:var(--gold);font-weight:700}
+/* Right panel */
+.right-panel{width:210px;flex-shrink:0;display:flex;flex-direction:column;gap:10px}
+.bait-panel{background:rgba(4,8,20,.92);border:1px solid rgba(245,200,66,.15);
+  border-top:2px solid rgba(245,200,66,.2);border-radius:14px;padding:12px}
+.bait-lbl{font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:3px;color:#334155;margin-bottom:7px}
+.bait-row{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.bait-icon{font-size:1.8rem}
+.bait-name{font-family:'Cinzel',serif;font-size:.85rem;color:#e2e8f0}
+
+/* ── REEL ── */
+#s-reel{position:relative;overflow:hidden;align-items:center;justify-content:flex-end;padding-bottom:32px}
+#reel-loc-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+#reel-fish-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+.reel-overlay{position:absolute;inset:0;background:rgba(3,7,18,.52);z-index:2;pointer-events:none}
+.reel-vignette{position:absolute;inset:0;z-index:3;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 25%,rgba(3,7,18,.8) 100%)}
+.reel-banner{position:absolute;top:0;left:0;right:0;z-index:4;
+  background:linear-gradient(180deg,rgba(3,7,18,.95) 0%,transparent 100%);
+  padding:20px 40px 32px;text-align:center}
+.reel-title{font-family:'Cinzel',serif;font-size:2.4rem;color:var(--gold);
+  text-shadow:0 0 40px rgba(245,200,66,.6);animation:tpulse 1s ease-in-out infinite alternate}
+@keyframes tpulse{from{text-shadow:0 0 20px rgba(245,200,66,.3)}to{text-shadow:0 0 60px rgba(245,200,66,.9)}}
+.reel-controls{position:relative;z-index:4;background:rgba(3,6,16,.94);border:2px solid rgba(245,200,66,.3);
+  border-radius:20px;padding:20px 36px;width:640px;max-width:94vw;
+  display:flex;flex-direction:column;align-items:center;gap:14px;backdrop-filter:blur(12px)}
+.reel-hint{font-family:'Orbitron',monospace;font-size:.62rem;letter-spacing:4px;color:#60a5fa;text-align:center}
+.simon-seqs{display:flex;flex-direction:column;gap:10px;width:100%;align-items:center}
+.simon-row{display:flex;gap:10px;justify-content:center}
+.sk{width:50px;height:50px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;border:2px solid #1e2d40;background:rgba(255,255,255,.04);color:#334155;transition:all .15s}
+.sk.lit{border-color:var(--gold);background:rgba(245,200,66,.2);color:var(--gold);
+  box-shadow:0 0 20px rgba(245,200,66,.5);transform:scale(1.1)}
+.sk.ok{border-color:#16a34a!important;background:rgba(22,163,74,.25)!important;color:#4ade80!important}
+.sk.bad{border-color:#dc2626!important;background:rgba(220,38,38,.25)!important;color:#f87171!important;animation:shk .3s ease}
+.sk.nxt{border-color:#60a5fa;box-shadow:0 0 12px rgba(96,165,250,.4)}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.tension-wrap{width:100%}
+.tension-lbl{font-family:'Orbitron',monospace;font-size:.48rem;letter-spacing:3px;color:#334155;margin-bottom:5px}
+.tension-bar{height:16px;background:#0a1020;border-radius:8px;overflow:hidden;border:1px solid #1e2d40}
+.tension-fill{height:100%;width:0%;background:linear-gradient(90deg,#16a34a,#84cc16);border-radius:8px;transition:width .25s,background .3s}
+.reel-status{font-family:'Orbitron',monospace;font-size:.58rem;letter-spacing:3px;color:#475569;text-align:center}
+
+/* ── QUESTION ── */
+#s-question{align-items:center;justify-content:center;position:relative;overflow:hidden}
+#q-loc-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:.4}
+#s-question::before{content:'';position:absolute;inset:0;background:rgba(3,7,18,.78);z-index:1}
+.q-panel{position:relative;z-index:2;background:var(--panel);border:2px solid rgba(245,200,66,.22);
+  border-radius:20px;padding:32px 42px;max-width:580px;width:92%;
+  display:flex;flex-direction:column;gap:16px;box-shadow:0 0 60px rgba(0,0,0,.7)}
+.q-top{display:flex;align-items:center;justify-content:space-between}
+.q-eye{font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:4px;color:var(--dgold)}
+.q-hearts{display:flex;gap:4px;font-size:1.1rem}
+.q-fish-strip{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);
+  border-radius:10px;padding:10px 14px;border:1px solid #0e1e30}
+.q-fish-strip video{width:80px;height:54px;border-radius:6px;object-fit:cover;display:block}
+.q-fish-name{font-family:'Cinzel',serif;font-size:.95rem}
+.q-fish-pts{font-size:.7rem;color:#334155;margin-top:3px;font-family:'Orbitron',monospace;letter-spacing:1px}
+.q-text{font-family:'Cinzel',serif;font-size:1.12rem;color:#f1f5f9;line-height:1.5;text-align:center}
+.q-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.q-btn{padding:14px 12px;background:rgba(255,255,255,.04);border:2px solid #1e2d40;border-radius:10px;
+  color:#cbd5e1;font-family:'Exo 2',sans-serif;font-size:.88rem;cursor:pointer;transition:all .2s;
+  text-align:center;line-height:1.3}
+.q-btn:hover:not(:disabled){border-color:var(--gold);background:rgba(245,200,66,.08);color:var(--gold)}
+.q-btn.ok{border-color:#16a34a!important;background:rgba(22,163,74,.18)!important;color:#4ade80!important}
+.q-btn.bad{border-color:#dc2626!important;background:rgba(220,38,38,.18)!important;color:#f87171!important}
+.q-btn:disabled{cursor:default}
+
+/* ── CATCH ── */
+#s-catch{align-items:center;justify-content:center;position:relative;overflow:hidden}
+#catch-loc-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:.5}
+#s-catch::before{content:'';position:absolute;inset:0;background:rgba(3,7,18,.68);z-index:1}
+.catch-card{position:relative;z-index:2;background:var(--panel);border:2px solid var(--gold);
+  border-radius:22px;padding:36px 44px;display:flex;flex-direction:column;align-items:center;gap:13px;
+  text-align:center;box-shadow:0 0 80px rgba(245,200,66,.2);
+  animation:cpop .4s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes cpop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.catch-hl{font-family:'Cinzel',serif;font-size:2rem;color:var(--gold);text-shadow:0 0 30px rgba(245,200,66,.4)}
+.catch-vid-wrap{width:260px;height:175px;border-radius:14px;overflow:hidden;border:2px solid var(--dgold)}
+.catch-vid-wrap video{width:100%;height:100%;object-fit:cover;display:block}
+.catch-fish-name{font-family:'Cinzel',serif;font-size:1.4rem;color:#f1f5f9}
+.catch-badge{font-size:.65rem;font-weight:700;letter-spacing:2px;padding:3px 14px;border-radius:20px;text-transform:uppercase;display:inline-block}
+.catch-meas{display:flex;gap:20px;background:rgba(255,255,255,.04);border:1px solid #1e2d40;
+  border-radius:10px;padding:10px 20px;width:100%;justify-content:center}
+.cm-item{text-align:center}
+.cm-lbl{font-family:'Orbitron',monospace;font-size:.46rem;letter-spacing:3px;color:#334155;margin-bottom:3px}
+.cm-val{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;color:#e2e8f0}
+.cm-val.rec{color:var(--gold);text-shadow:0 0 10px rgba(245,200,66,.5)}
+.catch-record{font-family:'Orbitron',monospace;font-size:.65rem;letter-spacing:2px;color:var(--gold);
+  text-shadow:0 0 14px rgba(245,200,66,.6);display:none}
+.catch-cash{font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#4ade80}
+.catch-btn{margin-top:4px;padding:13px 40px;background:linear-gradient(135deg,#92400e,var(--gold));
+  border:none;border-radius:10px;font-family:'Orbitron',monospace;font-size:.72rem;
+  color:#0a0f1a;cursor:pointer;font-weight:700;letter-spacing:3px;transition:transform .15s}
+.catch-btn:hover{transform:scale(1.04)}
+
+/* ── SHOP ── */
+#s-shop{align-items:center;justify-content:center;position:relative;overflow:hidden}
+#s-shop::before{content:'';position:absolute;inset:0;background:url('baitshop.png') center/cover no-repeat;z-index:0}
+#s-shop::after{content:'';position:absolute;inset:0;background:rgba(4,3,2,.6);z-index:1;backdrop-filter:blur(1px)}
+.shop-panel{position:relative;z-index:2;background:rgba(6,10,22,.96);border:2px solid var(--dgold);
+  border-radius:22px;padding:26px 32px;width:820px;max-width:96vw;
+  display:flex;flex-direction:column;gap:16px;box-shadow:0 0 80px rgba(180,120,0,.18)}
+.shop-top{display:flex;align-items:flex-start;justify-content:space-between}
+.shop-title{font-family:'Cinzel',serif;font-size:1.8rem;color:var(--gold)}
+.shop-sub{font-family:'Orbitron',monospace;font-size:.56rem;letter-spacing:3px;color:#475569;margin-top:4px}
+.shop-meta{text-align:right}
+.shop-cash{font-family:'Orbitron',monospace;font-size:1.1rem;color:#4ade80;font-weight:700}
+.shop-visits{font-family:'Orbitron',monospace;font-size:.56rem;letter-spacing:3px;color:#475569;margin-top:3px}
+.bait-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.bc{background:rgba(255,255,255,.04);border:2px solid #1e2d40;border-radius:14px;
+  padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:7px;
+  cursor:pointer;transition:all .2s;position:relative;text-align:center}
+.bc:hover:not(.cant):not(.eq){border-color:var(--dgold);transform:translateY(-3px)}
+.bc.sel-bc{border-color:var(--gold);background:rgba(245,200,66,.08);box-shadow:0 0 18px rgba(245,200,66,.2)}
+.bc.cant{opacity:.4;cursor:not-allowed}
+.bc.eq{border-color:rgba(245,200,66,.4)}
+.bc-eq-badge{position:absolute;top:5px;right:5px;font-family:'Orbitron',monospace;font-size:.52rem;
+  background:var(--gold);color:#0a0f1a;border-radius:5px;padding:2px 5px;font-weight:700}
+.bc-icon{font-size:2rem}
+.bc-name{font-family:'Cinzel',serif;font-size:.78rem;color:#e2e8f0;line-height:1.2}
+.bc-desc{font-size:.62rem;color:#475569;line-height:1.3}
+.bc-boost{font-size:.6rem;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:10px}
+.bc-price{font-family:'Orbitron',monospace;font-size:.82rem;color:var(--gold);font-weight:700}
+.shop-active{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);
+  border:1px solid #1e2d40;border-radius:10px;padding:10px 14px}
+.sa-icon{font-size:1.6rem}
+.sa-name{font-family:'Orbitron',monospace;font-size:.7rem;color:#e2e8f0}
+.sa-desc{font-size:.6rem;color:#334155;margin-top:2px}
+.shop-warn{font-family:'Orbitron',monospace;font-size:.58rem;letter-spacing:2px;color:#dc2626;text-align:center;min-height:1.2em}
+.shop-btns{display:flex;gap:10px;justify-content:flex-end}
+.btn-back{padding:11px 28px;background:rgba(255,255,255,.05);border:2px solid #1e2d40;border-radius:10px;
+  font-family:'Orbitron',monospace;font-size:.65rem;color:#64748b;cursor:pointer;letter-spacing:2px;transition:all .2s}
+.btn-back:hover{border-color:#475569;color:#94a3b8}
+.btn-equip{padding:11px 28px;background:linear-gradient(135deg,#92400e,var(--gold));border:none;
+  border-radius:10px;font-family:'Orbitron',monospace;font-size:.65rem;color:#0a0f1a;
+  cursor:pointer;font-weight:700;letter-spacing:2px;transition:transform .15s}
+.btn-equip:hover:not(:disabled){transform:scale(1.04)}
+.btn-equip:disabled{opacity:.35;cursor:not-allowed;transform:none}
+
+/* ── TROPHY ── */
+#s-trophy{align-items:center;justify-content:center;position:relative;overflow:hidden}
+#s-trophy::before{content:'';position:absolute;inset:0;background:url('map.png') center/cover no-repeat;z-index:0}
+#s-trophy::after{content:'';position:absolute;inset:0;background:rgba(3,7,18,.88);z-index:1}
+.trophy-panel{position:relative;z-index:2;background:var(--panel);border:2px solid var(--dgold);
+  border-radius:22px;padding:26px 32px;width:900px;max-width:96vw;max-height:90vh;
+  display:flex;flex-direction:column;gap:14px;box-shadow:0 0 80px rgba(180,120,0,.18)}
+.trophy-top{display:flex;align-items:flex-start;justify-content:space-between}
+.trophy-title{font-family:'Cinzel',serif;font-size:1.8rem;color:var(--gold)}
+.trophy-sub{font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:3px;color:#334155;margin-top:3px}
+.trophy-filters{display:flex;gap:7px;flex-wrap:wrap}
+.tf-btn{padding:5px 13px;border:1px solid #1e2d40;border-radius:20px;background:rgba(255,255,255,.04);
+  color:#475569;font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:1px;cursor:pointer;transition:all .2s}
+.tf-btn.active{border-color:var(--gold);background:rgba(245,200,66,.1);color:var(--gold)}
+.trophy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;overflow-y:auto;max-height:54vh;padding-right:4px}
+.tcard{background:rgba(255,255,255,.03);border:1px solid #1e2d40;border-radius:12px;padding:11px}
+.tcard-name{font-family:'Cinzel',serif;font-size:.85rem;color:#e2e8f0}
+.tcard-rar{font-size:.58rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.tcard-rec{display:flex;align-items:center;justify-content:space-between;margin-top:7px}
+.tcard-w{font-family:'Orbitron',monospace;font-size:.95rem;color:var(--gold);font-weight:700}
+.tcard-len{font-size:.65rem;color:#475569;margin-top:1px}
+.tcard-holder{text-align:right}
+.tcard-hname{font-size:.7rem;color:#64748b;font-style:italic}
+.tcard-hperiod{font-size:.58rem;color:#334155}
+.tcard-empty{font-family:'Orbitron',monospace;font-size:.58rem;color:#1e2d40;letter-spacing:2px;margin-top:7px}
+.tcard-max{font-size:.58rem;color:#1e2d40;font-family:'Orbitron',monospace;letter-spacing:1px;margin-top:4px}
+
+/* ── GAME OVER ── */
+#s-gameover{align-items:center;justify-content:center;position:relative;overflow:hidden}
+#s-gameover::before{content:'';position:absolute;inset:0;background:url('map.png') center/cover no-repeat;z-index:0}
+#s-gameover::after{content:'';position:absolute;inset:0;background:rgba(3,7,18,.88);z-index:1}
+.go-panel{position:relative;z-index:2;background:var(--panel);border:2px solid #dc2626;
+  border-radius:22px;padding:36px 52px;display:flex;flex-direction:column;align-items:center;gap:12px;
+  text-align:center;box-shadow:0 0 60px rgba(220,38,38,.2);min-width:420px}
+.go-title{font-family:'Cinzel',serif;font-size:2.4rem;color:#f87171}
+.go-score{font-family:'Orbitron',monospace;font-size:2.6rem;color:#4ade80;font-weight:700}
+.go-sub{font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:3px;color:#334155}
+.go-loc{font-family:'Cinzel',serif;font-size:.9rem;color:#64748b}
+.lb-section{width:100%}
+.lb-head{font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:3px;color:var(--dgold);margin-bottom:9px;text-transform:uppercase}
+.lb-list{display:flex;flex-direction:column;gap:5px;max-height:190px;overflow-y:auto}
+.lb-row{display:flex;align-items:center;gap:9px;padding:7px 11px;background:rgba(255,255,255,.03);border-radius:8px}
+.lb-rank{width:20px;font-family:'Orbitron',monospace;font-size:.68rem;color:#334155;font-weight:700}
+.lb-rank.t{color:var(--gold)}
+.lb-name{flex:1;color:#e2e8f0;font-size:.84rem}
+.lb-score{color:#4ade80;font-weight:700;font-family:'Orbitron',monospace;font-size:.75rem}
+.lb-period{font-size:.62rem;color:#334155;font-family:'Orbitron',monospace}
+.go-btns{display:flex;gap:10px;margin-top:6px}
+
+/* NOTIF */
+.notif{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-80px);
+  background:var(--panel);border:2px solid var(--dgold);border-radius:12px;
+  padding:11px 26px;font-family:'Cinzel',serif;font-size:.95rem;color:var(--gold);
+  z-index:9999;transition:transform .4s cubic-bezier(.175,.885,.32,1.275);pointer-events:none}
+.notif.show{transform:translateX(-50%) translateY(0)}
+
+/* DEBUG */
+#dbg{position:fixed;bottom:4px;left:4px;z-index:9999;background:rgba(0,0,0,.88);
+  color:#0f0;font-family:monospace;font-size:.65rem;padding:6px 10px;border-radius:6px;
+  max-width:420px;max-height:130px;overflow-y:auto;border:1px solid #0f0;display:none}
+</style>
+</head>
+<body>
+
+<!-- AUDIO -->
+<audio id="aud-lobby" loop preload="auto"><source src="lobby.mp3" type="audio/mpeg"></audio>
+<audio id="aud-music" loop preload="auto"><source src="fishingmusic.mp3" type="audio/mpeg"></audio>
+<audio id="aud-bite"  preload="auto"><source src="fishingreel.mp3" type="audio/mpeg"></audio>
+<audio id="aud-reel"  loop preload="auto"><source src="fishingreel.mp3" type="audio/mpeg"></audio>
+
+<div class="notif" id="notif"></div>
+<div id="dbg"></div>
+
+<!-- MUTE BUTTON -->
+<button id="mute-btn" title="Toggle Music"
+  style="position:fixed;bottom:16px;right:16px;z-index:9999;background:rgba(3,6,16,.9);
+  border:1px solid rgba(245,200,66,.3);border-radius:50%;width:40px;height:40px;
+  font-size:1.1rem;cursor:pointer;display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(8px);">🎵</button>
+
+<!-- ══ TITLE ══ -->
+<div class="screen active" id="s-title">
+  <div class="title-z">
+    <div class="title-card">
+      <div class="t-eye">⚓ Pioneer Middle School</div>
+      <div class="t-main">Ancient <span>Greece</span><br>Fishing Challenge</div>
+      <div class="t-sub">Cast · Answer · Reel · Conquer</div>
+    </div>
+    <div class="entry">
+      <label>ENTER YOUR NAME</label>
+      <input type="text" id="inp-name" placeholder="Fisherman's name..." maxlength="20">
+      <label>SELECT CLASS PERIOD</label>
+      <div class="prow">
+        <button class="pbtn" data-p="1st">1ST</button>
+        <button class="pbtn" data-p="2nd">2ND</button>
+        <button class="pbtn" data-p="5th">5TH</button>
+        <button class="pbtn" data-p="6th">6TH</button>
+      </div>
+      <button class="gbtn" id="btn-start" disabled>🎣 CAST OFF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LOCATION ══ -->
+<div class="screen" id="s-location">
+  <div class="loc-z">
+    <div class="loc-h">Choose Your Fishing Spot</div>
+    <div class="loc-sh">Higher cast level = rarer fish</div>
+    <div class="loc-grid" id="loc-grid"></div>
+    <button class="gbtn" id="btn-loc-go" disabled>🎣 START FISHING</button>
+  </div>
+</div>
+
+<!-- ══ GAME ══ -->
+<div class="screen" id="s-game">
+  <video id="game-bg" autoplay loop muted playsinline></video>
+  <div class="g-vignette"></div>
+  <div class="scanlines"></div>
+  <div class="hud">
+    <div class="hud-blk"><div class="hud-lbl">Angler</div><div class="hud-val" id="hud-name">—</div></div>
+    <div class="hud-blk"><div class="hud-lbl">Period</div><div class="hud-val" id="hud-period">—</div></div>
+    <div class="hud-center">
+      <div class="hud-loc" id="hud-loc">—</div>
+      <div class="hud-cast" id="hud-cast">CAST LEVEL —</div>
+    </div>
+    <div class="hud-blk"><div class="hud-lbl">💰 Cash</div><div class="hud-val green" id="hud-cash">$0</div></div>
+    <div class="hud-blk">
+      <div class="hud-lbl">Lives</div>
+      <div class="hud-hearts">
+        <span class="heart" id="h1">❤️</span>
+        <span class="heart" id="h2">❤️</span>
+        <span class="heart" id="h3">❤️</span>
+      </div>
+    </div>
+    <div class="hud-blk" style="flex-direction:row;align-items:center;gap:6px;">
+      <button class="hud-btn gold-btn" id="btn-shop" onclick="openShop()">🏪 SHOP</button>
+      <button class="hud-btn gold-btn" onclick="openTrophy()">🏆</button>
+      <button class="hud-btn green-btn" onclick="changeLocation()">🗺️</button>
+    </div>
+  </div>
+  <div class="sidebar">
+    <div class="sb-title">🏆 Top Anglers Here</div>
+    <div id="sidebar-lb"><span style="color:#1e2d40;font-family:Orbitron,monospace;font-size:.62rem;letter-spacing:2px;">Loading...</span></div>
+  </div>
+  <div class="bottom">
+    <div class="cast-panel">
+      <div class="water" id="water" onclick="onWaterClick()">
+        <img id="cast-thumb" src="cast.jpg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:block;">
+        <video id="lure-vid" muted playsinline loop style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none;min-width:100%;min-height:100%;"></video>
+        <div class="water-vignette"></div>
+        <div class="wline"></div><div class="wline"></div><div class="wline"></div>
+        <div class="cta" id="cta-cast">
+          <div class="cta-icon">🎣</div>
+          <div class="cta-txt">CLICK TO CAST</div>
+        </div>
+        <div class="cta" id="cta-wait" style="display:none;">
+          <div style="font-family:Orbitron,monospace;font-size:.58rem;letter-spacing:3px;color:#94a3b8;">WAITING FOR BITE</div>
+          <div class="dots"><span></span><span></span><span></span></div>
+        </div>
+        <div class="cta" id="cta-bite" style="display:none;">
+          <div class="bite-flash">🐟 BITE! BITE!</div>
+          <div style="font-family:Orbitron,monospace;font-size:.58rem;letter-spacing:2px;color:#64748b;margin-top:4px;">CLICK TO REEL</div>
+        </div>
+      </div>
+      <button class="cast-btn" id="btn-cast" onclick="onCastBtn()">[ CAST LINE ]</button>
+    </div>
+    <div class="catch-panel">
+      <div id="lc-vid"><span style="font-size:3rem;color:#1e2d40;">🌊</span></div>
+      <div class="lc-bottom">
+        <div><div class="lc-lbl">Last Catch</div><div class="lc-name" id="lc-name">Cast your line!</div></div>
+        <div class="lc-right"><div class="lc-rar" id="lc-rar"></div><div class="lc-pts" id="lc-pts"></div></div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="bait-panel">
+        <div class="bait-lbl">Active Bait</div>
+        <div class="bait-row">
+          <div class="bait-icon" id="g-bait-icon">🪱</div>
+          <div class="bait-name" id="g-bait-name">Nightcrawler</div>
+        </div>
+        <button class="cast-btn" style="margin-top:0;" onclick="openShop()">🏪 BAIT SHOP</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FISH ON TRANSITION ══ -->
+<div class="screen" id="s-fishon" style="background:#000;align-items:center;justify-content:center;">
+  <video id="fishon-vid" playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"></video>
+  <div style="position:absolute;inset:0;background:rgba(3,7,18,.25);z-index:1;pointer-events:none;"></div>
+</div>
+
+<!-- ══ REEL ══ -->
+<div class="screen" id="s-reel">
+  <video id="reel-loc-bg" autoplay loop muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;"></video>
+  <video id="reel-fish-bg" autoplay loop muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;"></video>
+  <div class="reel-overlay"></div>
+  <div class="reel-vignette"></div>
+  <div class="reel-banner">
+    <div class="reel-title" id="reel-title">🎣 FISH ON!</div>
+  </div>
+  <div class="reel-controls">
+    <div class="reel-hint" id="reel-hint">MEMORIZE THE SEQUENCES</div>
+    <div class="simon-seqs" id="simon-seqs"></div>
+    <div class="tension-wrap">
+      <div class="tension-lbl">⚡ REEL PROGRESS</div>
+      <div class="tension-bar"><div class="tension-fill" id="tension-fill"></div></div>
+    </div>
+    <div class="reel-status" id="reel-status">WATCH THE SEQUENCE...</div>
+  </div>
+</div>
+
+<!-- ══ QUESTION ══ -->
+<div class="screen" id="s-question">
+  <video id="q-loc-bg" autoplay loop muted playsinline></video>
+  <div style="position:absolute;inset:0;background:rgba(3,7,18,.78);z-index:1;"></div>
+  <div class="q-panel">
+    <div class="q-top">
+      <div class="q-eye">🏛️ ANCIENT HISTORY CHALLENGE</div>
+      <div class="q-hearts" id="q-hearts">❤️❤️❤️</div>
+    </div>
+    <div class="q-fish-strip">
+      <video id="q-fish-vid" autoplay loop muted playsinline></video>
+      <div>
+        <div class="q-fish-name" id="q-fish-name">—</div>
+        <div class="q-fish-pts" id="q-fish-pts">Answer correctly to land it!</div>
+      </div>
+    </div>
+    <div class="q-text" id="q-text">Loading...</div>
+    <div class="q-grid" id="q-grid"></div>
+  </div>
+</div>
+
+<!-- ══ CATCH ══ -->
+<div class="screen" id="s-catch">
+  <video id="catch-loc-bg" autoplay loop muted playsinline></video>
+  <div style="position:absolute;inset:0;background:rgba(3,7,18,.68);z-index:1;"></div>
+  <div class="catch-card">
+    <div class="catch-hl" id="catch-hl">🎉 CAUGHT IT!</div>
+    <div class="catch-vid-wrap"><video id="catch-vid" autoplay loop muted playsinline></video></div>
+    <div class="catch-fish-name" id="catch-fish-name">—</div>
+    <div class="catch-badge" id="catch-badge"></div>
+    <div class="catch-meas">
+      <div class="cm-item"><div class="cm-lbl">Weight</div><div class="cm-val" id="cm-w">—</div></div>
+      <div class="cm-item"><div class="cm-lbl">Length</div><div class="cm-val" id="cm-l">—</div></div>
+      <div class="cm-item"><div class="cm-lbl">Cash Earned</div><div class="cm-val" id="cm-cash">—</div></div>
+    </div>
+    <div class="catch-record" id="catch-record">🏆 NEW SPECIES RECORD!</div>
+    <button class="catch-btn" onclick="returnFishing()">🎣 FISH AGAIN</button>
+  </div>
+</div>
+
+<!-- ══ SHOP ══ -->
+<div class="screen" id="s-shop">
+  <div class="shop-panel">
+    <div class="shop-top">
+      <div>
+        <div class="shop-title">🪱 Hank's Bait Shop</div>
+        <div class="shop-sub">Higher quality bait costs more cash</div>
+      </div>
+      <div class="shop-meta">
+        <div class="shop-cash">💰 <span id="shop-cash-val">$0</span></div>
+        <div class="shop-visits" id="shop-visits-txt">3 VISITS REMAINING</div>
+      </div>
+    </div>
+    <div class="bait-grid" id="bait-grid"></div>
+    <div class="shop-active">
+      <div class="sa-icon" id="sa-icon">🪱</div>
+      <div><div class="sa-name" id="sa-name">NIGHTCRAWLER WORM</div><div class="sa-desc" id="sa-desc">Standard bait. No bonus.</div></div>
+    </div>
+    <div class="shop-warn" id="shop-warn"></div>
+    <div class="shop-btns">
+      <button class="btn-back" onclick="closeShop()">[ BACK TO FISHING ]</button>
+      <button class="btn-equip" id="btn-equip" onclick="buyBait()" disabled>[ EQUIP BAIT ]</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TROPHY ══ -->
+<div class="screen" id="s-trophy">
+  <div class="trophy-panel">
+    <div class="trophy-top">
+      <div>
+        <div class="trophy-title">🏆 Trophy Room</div>
+        <div class="trophy-sub">Per-species weight records · All periods</div>
+      </div>
+      <button class="btn-back" onclick="closeTrophy()">[ BACK TO FISHING ]</button>
+    </div>
+    <div class="trophy-filters" id="trophy-filters"></div>
+    <div class="trophy-grid" id="trophy-grid"></div>
+  </div>
+</div>
+
+<!-- ══ GAME OVER ══ -->
+<div class="screen" id="s-gameover">
+  <div class="go-panel">
+    <div class="go-title">💀 LINES CUT</div>
+    <div class="go-score" id="go-score">$0</div>
+    <div class="go-sub">Final Cash</div>
+    <div class="go-loc" id="go-loc">—</div>
+    <div class="lb-section">
+      <div class="lb-head">🏆 Top Anglers — This Location</div>
+      <div class="lb-list" id="lb-list"><span style="color:#334155;">Loading...</span></div>
+    </div>
+    <div class="go-btns">
+      <button class="gbtn" style="background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#7dd3fc;box-shadow:none;" onclick="changeLocation()">🗺️ Change Lake</button>
+      <button class="gbtn" onclick="location.reload()">🔄 Play Again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const FISH=[{"id": "bluegill", "label": "Bluegill", "rarity": "common", "pts": 10, "w": 35, "wMin": 0.1, "wMax": 2.5, "lMin": 4, "lMax": 13}, {"id": "perch", "label": "Yellow Perch", "rarity": "common", "pts": 10, "w": 30, "wMin": 0.1, "wMax": 2.8, "lMin": 4, "lMax": 14}, {"id": "rockbass", "label": "Rock Bass", "rarity": "common", "pts": 10, "w": 25, "wMin": 0.1, "wMax": 2.2, "lMin": 4, "lMax": 12}, {"id": "carp", "label": "Common Carp", "rarity": "common", "pts": 10, "w": 20, "wMin": 1.5, "wMax": 28, "lMin": 12, "lMax": 36}, {"id": "catfish", "label": "Catfish", "rarity": "common", "pts": 15, "w": 18, "wMin": 0.5, "wMax": 18, "lMin": 8, "lMax": 28}, {"id": "goby", "label": "Round Goby", "rarity": "common", "pts": 5, "w": 15, "wMin": 0.05, "wMax": 0.4, "lMin": 2, "lMax": 7}, {"id": "crayfish", "label": "Crayfish", "rarity": "common", "pts": 5, "w": 12, "wMin": 0.05, "wMax": 0.3, "lMin": 2, "lMax": 6}, {"id": "crappie", "label": "Crappie", "rarity": "uncommon", "pts": 15, "w": 10, "wMin": 0.2, "wMax": 4, "lMin": 6, "lMax": 15}, {"id": "sheephead", "label": "Sheephead", "rarity": "uncommon", "pts": 20, "w": 9, "wMin": 0.5, "wMax": 18, "lMin": 8, "lMax": 26}, {"id": "channelcatfish", "label": "Channel Catfish", "rarity": "uncommon", "pts": 25, "w": 8, "wMin": 1.0, "wMax": 35, "lMin": 10, "lMax": 36}, {"id": "largemouthbass", "label": "Largemouth Bass", "rarity": "uncommon", "pts": 30, "w": 7, "wMin": 0.5, "wMax": 14, "lMin": 8, "lMax": 26}, {"id": "brooktrout", "label": "Brook Trout", "rarity": "uncommon", "pts": 30, "w": 6, "wMin": 0.2, "wMax": 8, "lMin": 6, "lMax": 22}, {"id": "smallmouthbass", "label": "Smallmouth Bass", "rarity": "uncommon", "pts": 35, "w": 5, "wMin": 0.3, "wMax": 9, "lMin": 7, "lMax": 24}, {"id": "northernpike", "label": "Northern Pike", "rarity": "rare", "pts": 60, "w": 3, "wMin": 1.0, "wMax": 38, "lMin": 14, "lMax": 48}, {"id": "rainbowtrout", "label": "Rainbow Trout", "rarity": "rare", "pts": 60, "w": 3, "wMin": 0.5, "wMax": 25, "lMin": 10, "lMax": 38}, {"id": "walleye", "label": "Walleye", "rarity": "rare", "pts": 70, "w": 2, "wMin": 0.5, "wMax": 18, "lMin": 10, "lMax": 34}, {"id": "salmon", "label": "Chinook Salmon", "rarity": "rare", "pts": 75, "w": 2, "wMin": 2.0, "wMax": 60, "lMin": 18, "lMax": 48}, {"id": "freshwatersharkman", "label": "Freshwater Sharkman", "rarity": "legendary", "pts": 500, "w": 1, "wMin": 80, "wMax": 400, "lMin": 60, "lMax": 120}];
+const QUESTIONS=[{"q": "During the Paleolithic era, early humans primarily survived by doing which of the following?", "a": ["Hunting animals and gathering wild plants", "Farming crops and raising livestock", "Building permanent stone shelters", "Trading goods with nearby settlements"], "c": 0}, {"q": "Which of the following best describes a nomadic lifestyle as practiced by Paleolithic people?", "a": ["Moving from place to place to follow food sources", "Settling permanently near a river to grow crops", "Building large cities with organized governments", "Developing written laws to govern communities"], "c": 0}, {"q": "Cave paintings created during the Paleolithic era most likely served which purpose?", "a": ["Recording hunts and communicating with spiritual forces", "Decorating homes to show wealth and status", "Teaching children to read and write", "Mapping trade routes to distant regions"], "c": 0}, {"q": "Which development marks the END of the Paleolithic era?", "a": ["The shift from hunting and gathering to farming", "The invention of bronze tools and weapons", "The construction of the first pyramids", "The development of alphabetic writing"], "c": 0}, {"q": "Early Paleolithic humans used fire for which of the following purposes?", "a": ["Cooking food, providing warmth, and protection against predators", "Smelting metal ores to make weapons", "Signaling to distant trade partners", "Powering early machines and tools"], "c": 0}, {"q": "Which of the following tools was most commonly used by Paleolithic humans?", "a": ["Sharpened stone flakes used for cutting and scraping", "Bronze swords cast in clay molds", "Iron plows used to turn soil", "Clay pots fired in kilns"], "c": 0}, {"q": "Which development best characterizes the Neolithic Revolution?", "a": ["The shift from nomadic hunting and gathering to settled farming", "The creation of the first written legal codes", "The construction of large stone temples for worship", "The invention of the wheel for transportation"], "c": 0}, {"q": "How did the development of agriculture change early human societies during the Neolithic era?", "a": ["It allowed people to form permanent settlements and support larger populations", "It forced people to travel greater distances to find food", "It eliminated the need for any form of social organization", "It reduced the number of people who could survive in one place"], "c": 0}, {"q": "Which of the following is a direct result of the Neolithic shift to farming?", "a": ["Specialization of labor as not everyone needed to find food", "A decrease in the overall human population", "The disappearance of religious and spiritual practices", "The elimination of trade between communities"], "c": 0}, {"q": "Neolithic people domesticated animals primarily for which reason?", "a": ["To provide a reliable source of food, labor, and materials", "To use them as symbols of religious worship only", "To race them in organized competitions", "To prevent them from attacking settlements"], "c": 0}, {"q": "How did farming surpluses affect early Neolithic societies?", "a": ["They led to social inequality as some people accumulated more wealth", "They created a perfectly equal distribution of resources", "They caused all communities to merge into one large settlement", "They eliminated the need for any form of trade"], "c": 0}, {"q": "The ancient region of Mesopotamia was located between which two rivers?", "a": ["The Tigris and Euphrates Rivers", "The Nile and Congo Rivers", "The Indus and Ganges Rivers", "The Yellow and Yangtze Rivers"], "c": 0}, {"q": "Hammurabi is best remembered in history for which of the following achievements?", "a": ["Creating one of the earliest written codes of law", "Constructing the Great Pyramid of Giza", "Inventing the Phoenician alphabet", "Founding the city of Mohenjo-daro"], "c": 0}, {"q": "Which statement best describes the principle behind Hammurabi's Code?", "a": ["Punishments should be proportional to the crime committed", "All citizens should be treated equally regardless of class", "Only priests had the authority to enforce laws", "Laws applied only to slaves and conquered peoples"], "c": 0}, {"q": "The Sumerians of ancient Mesopotamia are credited with developing which of the following?", "a": ["One of the earliest systems of writing called cuneiform", "The first democratic government in the ancient world", "The construction of the Great Wall", "A strictly monotheistic religious tradition"], "c": 0}, {"q": "Ziggurats in ancient Mesopotamia served which primary function?", "a": ["Acting as temples to connect the people to their gods", "Storing grain for distribution during famines", "Housing soldiers and military equipment", "Serving as royal palaces for Mesopotamian kings"], "c": 0}, {"q": "Which geographic feature most helped early Mesopotamian civilizations develop agriculture?", "a": ["Annual flooding that deposited rich silt along river banks", "Vast forests that provided abundant timber for building", "Mountain ranges that blocked all invading armies", "A dry desert climate that naturally prevented disease"], "c": 0}, {"q": "The Phoenicians are most historically significant for which of the following contributions?", "a": ["Developing an alphabet that became the basis for many modern writing systems", "Building the largest empire in the ancient Mediterranean world", "Inventing the wheel and adapting it for transportation", "Constructing the first system of aqueducts in the ancient world"], "c": 0}, {"q": "Phoenician city-states like Tyre and Sidon grew wealthy primarily because of which activity?", "a": ["Long-distance sea trade across the Mediterranean", "Conquering and taxing neighboring kingdoms", "Mining large deposits of gold and silver", "Developing highly productive agricultural land"], "c": 0}, {"q": "Which of the following best explains why the Phoenician alphabet spread so widely?", "a": ["It was simple to learn and useful for recording trade transactions", "It was enforced by a powerful Phoenician military empire", "It was the only ancient writing system that included vowel sounds", "It was required in all schools throughout conquered territories"], "c": 0}, {"q": "Phoenician traders are credited with spreading which valuable dye that became a symbol of royalty?", "a": ["Tyrian purple, made from a type of sea snail", "Indigo blue, made from plant extracts", "Saffron yellow, made from dried flower stamens", "Crimson red, made from powdered iron oxide"], "c": 0}, {"q": "The Nile River was essential to ancient Egyptian civilization primarily because it did which of the following?", "a": ["Provided rich silt for farming and a reliable source of water for irrigation", "Created a natural barrier that prevented all forms of invasion", "Allowed Egypt to build the largest naval fleet in the ancient world", "Connected Egypt directly to overland trade routes in Central Asia"], "c": 0}, {"q": "Which of the following best describes the role of the pharaoh in ancient Egyptian society?", "a": ["The pharaoh was both a political ruler and a divine figure considered a living god", "The pharaoh was elected by a council of priests each generation", "The pharaoh served as a military general but held no religious authority", "The pharaoh was a symbolic figurehead who held no real political power"], "c": 0}, {"q": "Ancient Egyptians developed hieroglyphics primarily to do which of the following?", "a": ["Record religious texts, government records, and important historical events", "Communicate secretly with foreign trading partners across the sea", "Teach children the principles of mathematics and natural science", "Decorate buildings and monuments for purely artistic purposes"], "c": 0}, {"q": "The construction of pyramids in ancient Egypt served which primary purpose?", "a": ["Acting as elaborate tombs to help pharaohs reach the afterlife", "Storing the grain supply for the population during periods of famine", "Serving as temples where all Egyptian citizens could worship their gods", "Functioning as fortresses designed to defend Egypt against invasion"], "c": 0}, {"q": "The Egyptian Book of the Dead was most closely associated with which aspect of Egyptian culture?", "a": ["Beliefs about the afterlife and the judgment of the human soul", "Instructions for building pyramids and decorating temple walls", "Military strategies used for conquering neighboring territories", "Agricultural techniques for farming the Nile River Valley"], "c": 0}, {"q": "The Kingdom of Kush was located in which region relative to ancient Egypt?", "a": ["South of Egypt along the upper Nile River in what is now Sudan", "North of Egypt along the coast of the Mediterranean Sea", "East of Egypt across the Red Sea on the Arabian Peninsula", "West of Egypt deep in the interior of the Sahara Desert"], "c": 0}, {"q": "Which of the following best describes the relationship between Kush and ancient Egypt?", "a": ["They had a complex relationship involving trade, conflict, and cultural exchange", "Kush and Egypt were constantly at war and never engaged in trade", "Egypt completely controlled Kush as a province throughout all of its history", "Kush had no meaningful contact with Egypt due to geographic barriers"], "c": 0}, {"q": "Kush became an important civilization largely because of its control of which resource?", "a": ["Iron production and trade routes connecting sub-Saharan Africa to Egypt", "Large deposits of limestone used for constructing pyramids and monuments", "Fertile farmland that produced surplus grain for the entire region", "Dense timber forests that supplied wood for Egyptian shipbuilding"], "c": 0}, {"q": "The city of Meroe became significant in Kushite history for which reason?", "a": ["It became the new capital and a major center of iron smelting and production", "It was the location where Kush first successfully defeated the Egyptian army", "It served as the sacred religious capital where all Kushite gods were worshipped", "It was the port city that controlled all trade along the Red Sea coast"], "c": 0}, {"q": "The cities of Mohenjo-daro and Harappa are most significant because they demonstrate which feature?", "a": ["Advanced urban planning with grid-like streets and sophisticated drainage systems", "The earliest use of iron tools and weapons in the entire ancient world", "A written language system that has been fully translated by modern scholars", "A powerful military that conquered and controlled most of the ancient world"], "c": 0}, {"q": "Which of the following best describes a unique characteristic of Indus Valley cities?", "a": ["They had remarkably uniform building standards and no evidence of large palaces or temples", "They were deliberately built on high ground far from rivers to avoid annual flooding", "They were ruled by powerful kings whose enormous palaces dominated the city center", "They had no evidence of any trade connections with other ancient civilizations"], "c": 0}, {"q": "Chandragupta Maurya is historically significant for which of the following achievements?", "a": ["Unifying most of the Indian subcontinent under a single empire for the first time", "Writing the earliest and most sacred version of the Hindu Vedas", "Commissioning the famous cave paintings and temples at Ajanta", "Introducing Buddhist teachings to China and Southeast Asia"], "c": 0}, {"q": "The Arthashastra was primarily a text about which subject?", "a": ["Political strategy, economics, and the art of governing a large empire", "Sacred religious rituals and prayers dedicated to the Hindu gods", "Mathematical principles and geometric formulas for constructing temples", "Military tactics and strategies for defeating enemy cavalry in battle"], "c": 0}, {"q": "Which of the following best explains why the Indus Valley writing system remains a mystery?", "a": ["It has never been deciphered because no bilingual text like the Rosetta Stone exists", "All written records were deliberately destroyed by conquering invading armies", "The Indus Valley people did not actually develop a true writing system", "The texts were written on organic materials that completely decomposed over time"], "c": 0}, {"q": "The concept of the Mandate of Heaven in ancient China was used primarily to justify which idea?", "a": ["A ruler whose government is just and fair has the approval of heaven to rule", "All Chinese citizens have the right to vote for and remove their leaders", "The emperor is the literal divine son of the sun god and cannot be questioned", "Military conquest is the only legitimate and recognized way to gain power"], "c": 0}, {"q": "Which dynasty is credited with first unifying China under a single centralized government?", "a": ["The Qin Dynasty under the rule of Shi Huangdi", "The Han Dynasty during the reign of Emperor Wu", "The Zhou Dynasty during the reign of King Wen", "The Shang Dynasty during the reign of King Tang"], "c": 0}, {"q": "Shi Huangdi is remembered for ordering the construction of which major project?", "a": ["An early version of the Great Wall connecting existing regional defensive walls", "A massive canal system designed to connect northern and southern China", "A network of imperial roads radiating outward from the capital city", "A series of heavily fortified garrison cities along the Silk Road"], "c": 0}, {"q": "Confucius taught that a stable and harmonious society was best achieved through which of the following?", "a": ["Respect for family relationships, proper behavior, and loyalty to rulers", "Democratic elections and the guarantee of equal rights for all citizens", "Military strength and the systematic conquest of neighboring kingdoms", "Individual freedom and the deliberate rejection of all traditional customs"], "c": 0}, {"q": "The Silk Road was significant in ancient Chinese history primarily because it did which of the following?", "a": ["Connected China to Central Asia and the Mediterranean, spreading goods and ideas", "Allowed China to build the largest and most powerful navy in the ancient world", "Created a geographic barrier that successfully prevented foreign armies from invading", "Provided the raw stone and timber materials needed to construct the Great Wall"], "c": 0}, {"q": "Which of the following best describes the social structure of ancient Chinese society under the Zhou Dynasty?", "a": ["A hierarchical system with the king at the top followed by lords, warriors, farmers, and artisans", "A democratic system in which all free adult men could participate in government decisions", "A theocratic system ruled entirely by Buddhist monks and religious priests", "An egalitarian system with no formal social classes or meaningful distinctions between people"], "c": 0}, {"q": "Which of the following best describes the form of government developed in ancient Athens?", "a": ["A direct democracy in which male citizens voted on laws and government policies", "A representative democracy in which elected officials made all governmental decisions", "A monarchy in which a single hereditary king held all political and military power", "An oligarchy in which a small group of wealthy landowners controlled the government"], "c": 0}, {"q": "The Spartan agoge was a rigorous training system designed primarily to achieve which goal?", "a": ["Producing disciplined and physically capable soldiers loyal to the Spartan state", "Educating children in philosophy, advanced mathematics, and the literary arts", "Teaching young people the complex religious rituals required for temple service", "Preparing young merchants to conduct long-distance trade across the Greek world"], "c": 0}, {"q": "How did the role of women in Sparta differ most significantly from their role in Athens?", "a": ["Spartan women could own property and were encouraged to exercise, while Athenian women had very limited public roles", "Athenian women were expected to serve in the military while Spartan women stayed at home", "Spartan women could vote and speak in the assembly while Athenian women could not", "Athenian women managed all commercial trade and business while Spartan women did not"], "c": 0}, {"q": "The Persian Wars were significant to Greek history primarily because they did which of the following?", "a": ["United many Greek city-states in defense of their independence and strengthened Greek confidence", "Permanently and completely ended all future conflict between Greece and the Persian Empire", "Caused Athens and Sparta to form a permanent and equal political and military union", "Led directly and immediately to the military conquest of Persia by Alexander the Great"], "c": 0}, {"q": "Which Greek philosopher is best associated with the method of teaching through systematic questioning?", "a": ["Socrates, who questioned Athenians in public to examine their assumptions and beliefs", "Plato, who wrote the Republic as a detailed description of an ideal government", "Aristotle, who systematically classified plants, animals, and forms of government", "Pythagoras, who developed the famous mathematical theorem about right triangles"], "c": 0}, {"q": "Pericles is most credited with which achievement in Athenian history?", "a": ["Expanding democracy by paying citizens for jury service and public office", "Writing the first Athenian law code that applied equally to all citizens", "Leading Athens to a decisive naval victory over Persia at the Battle of Salamis", "Building the first agora where Athenian citizens could gather to discuss politics"], "c": 0}, {"q": "Which of the following was a key difference between Athenian democracy and modern democracy?", "a": ["Athenian democracy excluded women, slaves, and foreigners from participation", "Athenian democracy required citizens to be appointed rather than elected", "Athenian democracy gave equal voting rights to all people living in Athens", "Athenian democracy was controlled by a single elected president with broad powers"], "c": 0}, {"q": "What type of government did Sparta have?", "a": ["Oligarchy \u2014 ruled by a small group of powerful leaders", "Democracy \u2014 all citizens voted on major decisions", "Monarchy \u2014 a single hereditary king held all power", "Theocracy \u2014 priests governed in the name of the gods"], "c": 0}, {"q": "Which of the following best describes the Helots in Spartan society?", "a": ["An enslaved population forced to farm land for Spartan citizens", "A class of skilled craftsmen who made weapons for the military", "A group of elected officials who advised the Spartan kings", "A special unit of elite soldiers trained from birth for combat"], "c": 0}];
+const LOCATIONS=[{"id": "walledlakecast4", "name": "Walled Lake", "cast": 1, "color": "#4ade80", "desc": "Calm suburban lake. Good starting spot."}, {"id": "downrivercast2", "name": "Downriver", "cast": 2, "color": "#86efac", "desc": "Slow current. Nice panfish territory."}, {"id": "detroitrivercast3", "name": "Detroit River", "cast": 3, "color": "#facc15", "desc": "Urban waterway. Surprisingly diverse."}, {"id": "riverrougecast4", "name": "River Rouge", "cast": 4, "color": "#fb923c", "desc": "Industrial stretch. Catfish heaven."}, {"id": "bellevillecast5", "name": "Belleville Lake", "cast": 5, "color": "#f97316", "desc": "Popular local spot. Rare fish possible."}, {"id": "lakeeriecast6", "name": "Lake Erie", "cast": 6, "color": "#60a5fa", "desc": "Open water. Big fish run deep."}, {"id": "newhudsonpondcast7", "name": "New Hudson Pond", "cast": 7, "color": "#c084fc", "desc": "Hidden gem. Trophy fish sighted."}, {"id": "newburglakecast8", "name": "Newburg Lake", "cast": 8, "color": "#f43f5e", "desc": "Elite waters. Legends lurk below."}];
+const BAITS=[{"id": "worm", "name": "Nightcrawler Worm", "icon": "\ud83e\udeb1", "price": 0, "boost": {"common": 0, "uncommon": 0, "rare": 0, "legendary": 0}, "desc": "Standard bait. No bonus.", "boostLabel": "No boost", "boostColor": "#475569"}, {"id": "cricket", "name": "Cricket", "icon": "\ud83e\udd97", "price": 75, "boost": {"common": -3, "uncommon": 4, "rare": 0, "legendary": 0}, "desc": "Lively bait. Better chance at uncommon fish.", "boostLabel": "+Uncommon", "boostColor": "#60a5fa"}, {"id": "minnow", "name": "Live Minnow", "icon": "\ud83d\udc1f", "price": 150, "boost": {"common": -5, "uncommon": 1, "rare": 3, "legendary": 0}, "desc": "Attracts bigger predators. Boosts rare fish.", "boostLabel": "+Rare", "boostColor": "#c084fc"}, {"id": "crawler", "name": "Hellgrammite", "icon": "\ud83d\udc1b", "price": 300, "boost": {"common": -8, "uncommon": -2, "rare": 6, "legendary": 0.5}, "desc": "Expert bait. Significantly boosts rare catches.", "boostLabel": "++Rare", "boostColor": "#c084fc"}, {"id": "lure", "name": "Golden Lure", "icon": "\u2728", "price": 600, "boost": {"common": -12, "uncommon": -4, "rare": 8, "legendary": 2}, "desc": "Legendary bait. Rare and legendary fish cannot resist.", "boostLabel": "+++Rare+Legend", "boostColor": "#fb923c"}];
+const FB='https://ancient-greece-fishing-game-default-rtdb.firebaseio.com';
+
+// ═══════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════
+const ARROWS=[{key:'ArrowUp',s:'↑'},{key:'ArrowDown',s:'↓'},{key:'ArrowLeft',s:'←'},{key:'ArrowRight',s:'→'}];
+const RC={common:'var(--common)',uncommon:'var(--uncommon)',rare:'var(--rare)',legendary:'var(--legendary)'};
+const RL={common:'Common',uncommon:'Uncommon',rare:'Rare',legendary:'Legendary'};
+const SEQ_COUNT={common:1,uncommon:1,rare:2,legendary:2};
+const SEQ_LEN={common:3,uncommon:4,rare:3,legendary:4};
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+const G={
+  name:'',period:'',score:0,lives:3,
+  location:null,phase:'title',
+  fish:null,usedQ:[],
+  simon:[],simonCurRow:0,simonCurStep:0,simonPhase:'show',
+  totalSteps:0,completedSteps:0,
+  bitePending:false,biteTimer:null,
+  bait:null,shopVisits:3,
+  trophyFilter:'all',trophyCache:{},
+  musicOn:false,lobbyOn:false,muted:false,
+};
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+const $=id=>document.getElementById(id);
+function dbg(...a){const p=$('dbg');if(p.style.display==='block'){p.innerHTML=[...a].join(' ')+'<br>'+p.innerHTML.split('<br>').slice(0,9).join('<br>');}}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');dbg('→',id);}
+function notif(msg,dur=2400){const n=$('notif');n.textContent=msg;n.classList.add('show');setTimeout(()=>n.classList.remove('show'),dur);}
+function rc(r){return RC[r]||'#fff';}
+function rl(r){return RL[r]||r;}
+function updateLives(){for(let i=1;i<=3;i++){const h=$('h'+i);h&&(i<=G.lives?h.classList.remove('lost'):h.classList.add('lost'));}$('q-hearts').textContent='❤️'.repeat(G.lives)+'🖤'.repeat(3-G.lives);}
+function updateCash(){const s='$'+G.score;$('hud-cash').textContent=s;$('shop-cash-val').textContent=s;}
+function skewed(mn,mx){return mn+Math.pow(Math.random(),2.2)*(mx-mn);}
+function fmtW(w){return w<1?(w*16).toFixed(1)+' oz':w.toFixed(1)+' lbs';}
+function fmtL(l){return l.toFixed(1)+'"';}
+function safePlay(el,src){
+  if(!el||!src)return;
+  el.src=src;
+  const p=el.play();
+  if(p!==undefined)p.catch(e=>dbg('vid err',src.split('/').pop(),e.message));
+}
+document.addEventListener('keydown',e=>{if(e.key==='d'||e.key==='D'){const p=$('dbg');p.style.display=p.style.display==='block'?'none':'block';}});
+
+// ═══════════════════════════════════════
+// AUDIO
+// ═══════════════════════════════════════
+function startLobby(){
+  if(G.lobbyOn)return;
+  const a=$('aud-lobby');a.volume=0.22;
+  a.play().then(()=>{G.lobbyOn=true;}).catch(()=>{});
+}
+function stopLobby(){const a=$('aud-lobby');a.pause();a.currentTime=0;G.lobbyOn=false;}
+function startMusic(){
+  if(G.musicOn)return;
+  const a=$('aud-music');a.volume=0.15;
+  a.play().then(()=>{
+    G.musicOn=true;
+    const btn=$('mute-btn');btn.style.display='flex';
+  }).catch(()=>{});
+}
+function fadeMusic(target,dur=700){
+  if(G.muted)return;
+  const a=$('aud-music'),start=a.volume,diff=target-start,steps=20,iv=dur/steps;
+  let i=0;const t=setInterval(()=>{i++;a.volume=Math.min(1,Math.max(0,start+diff*i/steps));if(i>=steps)clearInterval(t);},iv);
+}
+function playBite(){const a=$('aud-bite');a.currentTime=0;a.volume=0.65;a.play().catch(()=>{});}
+function startReelSound(){const a=$('aud-reel');a.currentTime=0;a.volume=0.5;a.play().catch(()=>{});}
+function stopReelSound(){const a=$('aud-reel');a.pause();a.currentTime=0;}
+$('mute-btn').addEventListener('click',()=>{
+  const a=$('aud-music'),btn=$('mute-btn');
+  if(G.muted){a.volume=0.15;G.muted=false;btn.textContent='🎵';}
+  else{a.volume=0;G.muted=true;btn.textContent='🔇';}
+});
+
+// ═══════════════════════════════════════
+// TITLE
+// ═══════════════════════════════════════
+document.querySelectorAll('.pbtn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.pbtn').forEach(x=>x.classList.remove('sel'));
+  b.classList.add('sel');G.period=b.dataset.p;checkReady();startLobby();
+}));
+$('inp-name').addEventListener('input',()=>{checkReady();startLobby();});
+function checkReady(){$('btn-start').disabled=!($('inp-name').value.trim().length>=2&&G.period);}
+$('btn-start').addEventListener('click',()=>{
+  G.name=$('inp-name').value.trim();
+  stopLobby();
+  show('s-location');
+  buildLocGrid();
+  loadAllLB();
+});
+
+// ═══════════════════════════════════════
+// LOCATION SELECT
+// ═══════════════════════════════════════
+function buildLocGrid(){
+  const grid=$('loc-grid');grid.innerHTML='';
+  LOCATIONS.forEach(loc=>{
+    const card=document.createElement('div');
+    card.className='loc-card';
+    const stars='⭐'.repeat(Math.min(loc.cast,8));
+    card.innerHTML=`
+      <div class="loc-thumb">
+        <video autoplay loop muted playsinline
+          onerror="this.style.display='none'"
+          style="width:100%;height:100%;object-fit:cover;display:block;"
+          src="${loc.id}.mp4"></video>
+        <div class="loc-badge" style="background:${loc.color}22;border-color:${loc.color};color:${loc.color};">CAST ${loc.cast}</div>
+      </div>
+      <div class="loc-info">
+        <div class="loc-name">${loc.name}</div>
+        <div class="loc-stars">${stars}</div>
+        <div class="loc-desc">${loc.desc}</div>
+        <div class="loc-lb" id="llb-${loc.id}"><span style="color:#1e2d40;font-size:.6rem;">No scores yet</span></div>
+      </div>`;
+    card.addEventListener('click',()=>{
+      document.querySelectorAll('.loc-card').forEach(c=>c.classList.remove('sel'));
+      card.classList.add('sel');G.location=loc;$('btn-loc-go').disabled=false;
+    });
+    grid.appendChild(card);
+  });
+}
+$('btn-loc-go').addEventListener('click',()=>{if(G.location)startGame();});
+
+async function loadAllLB(){
+  try{
+    const r=await fetch(FB+'/scores.json');const data=await r.json();
+    if(!data)return;
+    const all=Object.values(data);
+    LOCATIONS.forEach(loc=>{
+      const el=$('llb-'+loc.id);if(!el)return;
+      const scores=all.filter(e=>e.location===loc.id&&e.period===G.period).sort((a,b)=>b.score-a.score).slice(0,3);
+      if(!scores.length)return;
+      el.innerHTML=scores.map((s,i)=>`<div class="loc-lb-row"><span class="loc-lb-rank">${i+1}</span><span class="loc-lb-name">${s.name}</span><span class="loc-lb-score">$${s.score}</span></div>`).join('');
+    });
+  }catch(e){dbg('LB err:',e.message);}
+}
+
+// ═══════════════════════════════════════
+// GAME START
+// ═══════════════════════════════════════
+function startGame(){
+  G.score=0;G.lives=3;G.usedQ=[];G.phase='fishing';
+  G.bait=BAITS[0];G.shopVisits=3;
+  updateCash();updateLives();
+  $('hud-name').textContent=G.name;
+  $('hud-period').textContent=G.period;
+  $('hud-loc').textContent=G.location.name;
+  $('hud-cast').textContent='CAST LEVEL '+G.location.cast;
+  $('g-bait-icon').textContent=G.bait.icon;
+  $('g-bait-name').textContent=G.bait.name.split(' ')[0];
+  $('btn-shop').classList.remove('locked');
+  safePlay($('game-bg'),G.location.id+'.mp4');
+  startMusic();
+  loadSidebarLB();
+  show('s-game');
+  resetFishing();
+}
+function changeLocation(){
+  stopReelSound();if(G.biteTimer)clearTimeout(G.biteTimer);
+  G.bitePending=false;G.phase='title';
+  show('s-location');loadAllLB();
+}
+
+// ═══════════════════════════════════════
+// FISHING
+// ═══════════════════════════════════════
+function resetFishing(){
+  $('cta-cast').style.display='flex';
+  $('cta-wait').style.display='none';
+  $('cta-bite').style.display='none';
+  $('btn-cast').disabled=false;
+  $('btn-cast').textContent='[ CAST LINE ]';
+  G.bitePending=false;
+  if(G.biteTimer)clearTimeout(G.biteTimer);
+  // Show static thumbnail, hide video
+  const lv=$('lure-vid');
+  lv.pause();lv.src='';lv.style.display='none';
+  $('cast-thumb').style.display='block';
+  dbg('Fishing reset — showing cast.jpg thumbnail');
+}
+function onWaterClick(){if(G.bitePending)doReel();else if(G.phase==='fishing'&&!$('btn-cast').disabled)doCast();}
+function onCastBtn(){if(G.bitePending)doReel();else if(G.phase==='fishing')doCast();}
+function doCast(){
+  $('cta-cast').style.display='none';
+  $('cta-wait').style.display='flex';
+  $('btn-cast').disabled=true;
+  $('btn-cast').textContent='[ WAITING... ]';
+  // Hide thumbnail, show reel video
+  const lv2=$('lure-vid');
+  const rn2='reel'+(Math.floor(Math.random()*4)+1)+'.mp4';
+  $('cast-thumb').style.display='none';
+  lv2.style.display='block';
+  lv2.src=rn2;lv2.load();lv2.play().catch(e=>dbg('lure2 err:',e.message));
+  dbg('Casting — playing lure vid:',rn2);
+  const roll=Math.random();
+  const delay=roll<0.25?800+Math.random()*1800:roll<0.75?2500+Math.random()*3000:5500+Math.random()*4500;
+  dbg('Cast! Bite in ~'+Math.round(delay/100)/10+'s');
+  G.biteTimer=setTimeout(()=>{
+    G.bitePending=true;
+    $('cta-wait').style.display='none';
+    $('cta-bite').style.display='flex';
+    $('btn-cast').disabled=false;
+    $('btn-cast').textContent='[ REEL IN! ]';
+    playBite();dbg('BITE!');
+  },delay);
+}
+
+// ═══════════════════════════════════════
+// REEL
+// ═══════════════════════════════════════
+function doReel(){
+  G.bitePending=false;if(G.biteTimer)clearTimeout(G.biteTimer);
+  G.phase='reel';G.fish=pickFish();
+  dbg('Fish:',G.fish.label,'('+G.fish.rarity+')');
+  // Play fishon.mp4 transition first
+  const fov=$('fishon-vid');
+  fov.src='fishon.mp4';
+  fov.muted=false;
+  show('s-fishon');
+  fov.play().catch(e=>{dbg('fishon err:',e.message);startReelScreen();});
+  fov.onended=()=>startReelScreen();
+  // Safety fallback in case video hangs
+  G._fishonTimer=setTimeout(()=>{if(G.phase==='reel'&&document.querySelector('#s-fishon.active'))startReelScreen();},4000);
+}
+function startReelScreen(){
+  clearTimeout(G._fishonTimer);
+  const fov=$('fishon-vid');fov.pause();fov.src='';
+  stopReelSound();startReelSound();fadeMusic(0.05,400);
+  safePlay($('reel-loc-bg'),G.location.id+'.mp4');
+  safePlay($('reel-fish-bg'),G.fish.id+'.mp4');
+  $('reel-title').innerHTML='🎣 <span style="color:'+rc(G.fish.rarity)+'">'+G.fish.label.toUpperCase()+'</span> ON THE LINE!';
+  const ns=SEQ_COUNT[G.fish.rarity]||1;
+  const sl=SEQ_LEN[G.fish.rarity]||3;
+  G.simon=Array.from({length:ns},()=>Array.from({length:sl},()=>ARROWS[Math.floor(Math.random()*4)]));
+  G.simonCurRow=0;G.simonCurStep=0;G.simonPhase='show';
+  G.totalSteps=ns*sl;G.completedSteps=0;
+  $('tension-fill').style.width='0%';
+  $('tension-fill').style.background='linear-gradient(90deg,#16a34a,#84cc16)';
+  buildSimon();show('s-reel');playSimon();
+}
+function buildSimon(){
+  const c=$('simon-seqs');c.innerHTML='';
+  G.simon.forEach((row,ri)=>{
+    const div=document.createElement('div');div.className='simon-row';
+    row.forEach((k,ci)=>{
+      const d=document.createElement('div');
+      d.className='sk';d.id='sk-'+ri+'-'+ci;d.textContent=k.s;
+      div.appendChild(d);
+    });
+    c.appendChild(div);
+  });
+}
+function playSimon(){
+  $('reel-hint').textContent='MEMORIZE THE SEQUENCES!';
+  $('reel-status').textContent='WATCH CAREFULLY...';
+  document.removeEventListener('keydown',onSimon);
+  // Phase 1: flash ALL arrows sequentially so player sees them
+  const all=G.simon.flatMap((row,ri)=>row.map((_,ci)=>({ri,ci})));
+  let idx=0,prev=null;
+  function showNext(){
+    if(prev)$('sk-'+prev.ri+'-'+prev.ci).classList.remove('lit');
+    if(idx>=all.length){
+      // All shown — wait 400ms then hide all arrows (memory mode)
+      setTimeout(hideAndCountdown,400);return;
+    }
+    const p=all[idx];$('sk-'+p.ri+'-'+p.ci).classList.add('lit');prev=p;idx++;
+    setTimeout(showNext,550);
+  }
+  setTimeout(showNext,600);
+}
+function hideAndCountdown(){
+  // Hide all arrow symbols — player must recall from memory
+  document.querySelectorAll('.sk').forEach(el=>{
+    el.classList.remove('lit');
+    el.textContent='?';
+    el.style.color='#1e2d40';
+    el.style.borderColor='#1e2d40';
+  });
+  $('reel-hint').textContent='NOW RECALL FROM MEMORY!';
+  // Countdown 3..2..1..GO!
+  let count=3;
+  $('reel-status').textContent='GET READY... '+count;
+  const cd=setInterval(()=>{
+    count--;
+    if(count>0){$('reel-status').textContent='GET READY... '+count;}
+    else{
+      clearInterval(cd);
+      $('reel-status').textContent='ROW 1 — GO!';
+      $('reel-hint').textContent='USE ARROW KEYS — RECALL THE ORDER!';
+      G.simonPhase='input';G.simonCurRow=0;G.simonCurStep=0;G.completedSteps=0;
+      hlNext();document.addEventListener('keydown',onSimon);
+    }
+  },1000);
+}
+function hlNext(){
+  document.querySelectorAll('.sk.nxt').forEach(e=>e.classList.remove('nxt'));
+  if(G.simonCurRow<G.simon.length&&G.simonCurStep<G.simon[G.simonCurRow].length)
+    $('sk-'+G.simonCurRow+'-'+G.simonCurStep).classList.add('nxt');
+}
+function onSimon(e){
+  if(G.simonPhase!=='input')return;
+  if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;
+  e.preventDefault();
+  const expected=G.simon[G.simonCurRow][G.simonCurStep];
+  const el=$('sk-'+G.simonCurRow+'-'+G.simonCurStep);
+  if(e.key===expected.key){
+    el.classList.remove('nxt');el.classList.add('ok');
+    el.textContent=expected.s;// reveal the arrow on correct hit
+    G.simonCurStep++;G.completedSteps++;
+    const pct=(G.completedSteps/G.totalSteps)*100;
+    $('tension-fill').style.width=pct+'%';
+    if(pct>50)$('tension-fill').style.background='linear-gradient(90deg,#ca8a04,#fbbf24)';
+    if(pct>80)$('tension-fill').style.background='linear-gradient(90deg,#dc2626,#f87171)';
+    if(G.simonCurStep>=G.simon[G.simonCurRow].length){
+      G.simonCurRow++;G.simonCurStep=0;
+      if(G.simonCurRow>=G.simon.length){
+        document.removeEventListener('keydown',onSimon);
+        stopReelSound();fadeMusic(0.15,600);
+        setTimeout(showQuestion,400);
+      }else{$('reel-status').textContent='ROW '+(G.simonCurRow+1)+' — GO!';hlNext();}
+    }else hlNext();
+  }else{
+    el.classList.remove('nxt');el.classList.add('bad');
+    el.textContent=expected.s;// reveal what they should have hit
+    document.removeEventListener('keydown',onSimon);
+    stopReelSound();fadeMusic(0.15,400);
+    $('reel-status').textContent='WRONG KEY — FISH ESCAPED!';
+    dbg('Wrong! Expected:',expected.s,'Got:',e.key);
+    setTimeout(()=>loseLife('Wrong sequence! The '+G.fish.label+' got away!'),800);
+  }
+}
+
+// ═══════════════════════════════════════
+// PICK FISH
+// ═══════════════════════════════════════
+function pickFish(){
+  const cl=G.location.cast,bb=G.bait.boost;
+  const w=FISH.map(f=>{
+    let wt=f.w;
+    if(f.rarity==='uncommon')wt+=cl*.5;
+    if(f.rarity==='rare')wt+=cl*1.2;
+    if(f.rarity==='legendary')wt+=cl*.4;
+    if(f.rarity==='common')wt=Math.max(.5,wt-cl*.3);
+    wt+=bb[f.rarity]||0;
+    return{...f,wt:Math.max(.05,wt)};
+  });
+  let r=Math.random()*w.reduce((s,f)=>s+f.wt,0);
+  for(const f of w){r-=f.wt;if(r<=0)return f;}
+  return w[w.length-1];
+}
+
+// ═══════════════════════════════════════
+// QUESTION
+// ═══════════════════════════════════════
+function showQuestion(){
+  G.phase='question';
+  if(!QUESTIONS.filter((_,i)=>!G.usedQ.includes(i)).length)G.usedQ=[];
+  const pool=QUESTIONS.filter((_,i)=>!G.usedQ.includes(i));
+  const pick=pool[Math.floor(Math.random()*pool.length)];
+  G.usedQ.push(QUESTIONS.indexOf(pick));
+  const opts=pick.a.map((t,i)=>({t,ok:i===pick.c}));
+  for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]];}
+  safePlay($('q-loc-bg'),G.location.id+'.mp4');
+  safePlay($('q-fish-vid'),G.fish.id+'.mp4');
+  $('q-fish-name').textContent=G.fish.label;
+  $('q-fish-name').style.color=rc(G.fish.rarity);
+  $('q-fish-pts').textContent='Answer correctly — earn $'+G.fish.pts+'!';
+  $('q-text').textContent=pick.q;
+  updateLives();
+  const grid=$('q-grid');grid.innerHTML='';
+  opts.forEach(o=>{
+    const b=document.createElement('button');b.className='q-btn';b.textContent=o.t;
+    b.addEventListener('click',()=>onAnswer(o.ok,b,grid));
+    grid.appendChild(b);
+  });
+  show('s-question');
+}
+function onAnswer(ok,btn,grid){
+  grid.querySelectorAll('.q-btn').forEach(b=>b.disabled=true);
+  if(ok){btn.classList.add('ok');setTimeout(showCatch,800);}
+  else{
+    btn.classList.add('bad');
+    grid.querySelectorAll('.q-btn').forEach(b=>{if(b!==btn)b.classList.add('ok');});
+    setTimeout(()=>loseLife('Wrong answer! The '+G.fish.label+' escaped!'),1000);
+  }
+}
+
+// ═══════════════════════════════════════
+// CATCH
+// ═══════════════════════════════════════
+function showCatch(){
+  const f=G.fish;
+  G.score+=f.pts;updateCash();
+  const weight=Math.round(skewed(f.wMin,f.wMax)*10)/10;
+  const length=Math.round(skewed(f.lMin,f.lMax)*10)/10;
+  const isRec=!G.trophyCache[f.id]||weight>G.trophyCache[f.id].w;
+  if(isRec)G.trophyCache[f.id]={w:weight,l:length,name:G.name,period:G.period};
+  safePlay($('catch-loc-bg'),G.location.id+'.mp4');
+  safePlay($('catch-vid'),f.id+'.mp4');
+  $('catch-hl').textContent=f.rarity==='legendary'?'🔥 LEGENDARY CATCH!':'🎉 CAUGHT IT!';
+  $('catch-fish-name').textContent=f.label;
+  const b=$('catch-badge');
+  b.textContent=rl(f.rarity);
+  b.style.cssText='background:'+rc(f.rarity)+'22;color:'+rc(f.rarity)+';border:1px solid '+rc(f.rarity)+';';
+  const wEl=$('cm-w'),lEl=$('cm-l');
+  wEl.textContent=fmtW(weight);lEl.textContent=fmtL(length);
+  wEl.className='cm-val'+(isRec?' rec':'');lEl.className='cm-val'+(isRec?' rec':'');
+  $('cm-cash').textContent='+$'+f.pts;
+  $('catch-record').style.display=isRec?'block':'none';
+  $('lc-vid').innerHTML='<video autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;display:block;" src="'+f.id+'.mp4"></video>';
+  $('lc-name').textContent=f.label;
+  $('lc-rar').textContent=rl(f.rarity);$('lc-rar').style.color=rc(f.rarity);
+  $('lc-pts').textContent='+$'+f.pts;
+  fadeMusic(0.22,300);
+  if(f.rarity==='legendary')notif('🦈 FRESHWATER SHARKMAN!! +$500!!',4000);
+  show('s-catch');
+  saveCatch(f.id,weight,length,f.pts);
+  dbg('Caught:',f.label,fmtW(weight),isRec?'NEW RECORD!':'');
+}
+function returnFishing(){G.phase='fishing';fadeMusic(0.15,600);show('s-game');resetFishing();}
+
+// ═══════════════════════════════════════
+// LIVES & GAME OVER
+// ═══════════════════════════════════════
+function loseLife(msg){
+  G.lives--;updateLives();notif('💔 '+msg,2500);dbg('Lives:',G.lives);
+  if(G.lives<=0)setTimeout(endGame,1200);
+  else{G.phase='fishing';fadeMusic(0.15,400);show('s-game');resetFishing();}
+}
+async function endGame(){
+  G.phase='gameover';
+  $('go-score').textContent='$'+G.score;
+  $('go-loc').textContent='📍 '+G.location.name+' · Cast '+G.location.cast;
+  show('s-gameover');
+  await saveScore();await loadFinalLB();
+}
+
+// ═══════════════════════════════════════
+// SHOP
+// ═══════════════════════════════════════
+let shopSel=null;
+function openShop(){
+  if(G.shopVisits<=0){notif('🔒 No more shop visits!',2000);return;}
+  G.shopVisits--;
+  const v=G.shopVisits;
+  $('shop-visits-txt').textContent=v+' VISIT'+(v!==1?'S':'')+' REMAINING';
+  if(v<=0)$('btn-shop').classList.add('locked');
+  shopSel=null;$('btn-equip').disabled=true;$('shop-warn').textContent='';
+  updateCash();renderBaitGrid();updateActiveDisplay();show('s-shop');
+}
+function closeShop(){show('s-game');resetFishing();}
+function renderBaitGrid(){
+  const grid=$('bait-grid');grid.innerHTML='';
+  BAITS.forEach(bait=>{
+    const isEq=G.bait.id===bait.id;
+    const cant=bait.price>G.score&&!isEq;
+    const card=document.createElement('div');
+    card.className='bc'+(cant?' cant':'')+(isEq?' eq':'');
+    card.innerHTML=`
+      ${isEq?'<div class="bc-eq-badge">EQUIPPED</div>':''}
+      <div class="bc-icon">${bait.icon}</div>
+      <div class="bc-name">${bait.name}</div>
+      <div class="bc-desc">${bait.desc}</div>
+      <div class="bc-boost" style="background:${bait.boostColor}22;color:${bait.boostColor};border:1px solid ${bait.boostColor};">${bait.boostLabel}</div>
+      <div class="bc-price">${bait.price===0?'FREE':'💰 $'+bait.price}</div>`;
+    if(!cant&&!isEq)card.addEventListener('click',()=>selectBait(bait,card));
+    grid.appendChild(card);
+  });
+}
+function selectBait(bait,card){
+  document.querySelectorAll('.bc').forEach(c=>c.classList.remove('sel-bc'));
+  card.classList.add('sel-bc');shopSel=bait;
+  $('btn-equip').disabled=false;
+  $('shop-warn').textContent=bait.price>0?'⚠️ Costs $'+bait.price+' — you have $'+G.score:'';
+}
+function buyBait(){
+  if(!shopSel)return;
+  if(shopSel.price>G.score){notif('💸 Not enough cash!',2000);return;}
+  G.score-=shopSel.price;G.bait=shopSel;shopSel=null;
+  updateCash();$('g-bait-icon').textContent=G.bait.icon;$('g-bait-name').textContent=G.bait.name.split(' ')[0];
+  notif(G.bait.icon+' '+G.bait.name+' equipped!',2200);
+  setTimeout(closeShop,600);
+}
+function updateActiveDisplay(){
+  $('sa-icon').textContent=G.bait.icon;$('sa-name').textContent=G.bait.name.toUpperCase();$('sa-desc').textContent=G.bait.desc;
+}
+
+// ═══════════════════════════════════════
+// TROPHY
+// ═══════════════════════════════════════
+async function openTrophy(){
+  show('s-trophy');fadeMusic(0.1,500);
+  await loadTrophyData();renderTrophyFilters();renderTrophyGrid();
+}
+function closeTrophy(){show('s-game');fadeMusic(0.15,500);resetFishing();}
+async function loadTrophyData(){
+  try{
+    const r=await fetch(FB+'/scores.json');const data=await r.json();
+    if(!data)return;
+    Object.values(data).forEach(e=>{
+      if(!e.fishId||!e.weight)return;
+      if(!G.trophyCache[e.fishId]||e.weight>G.trophyCache[e.fishId].w)
+        G.trophyCache[e.fishId]={w:e.weight,l:e.length||0,name:e.name||'?',period:e.period||''};
+    });
+  }catch(e){dbg('Trophy err:',e.message);}
+}
+function renderTrophyFilters(){
+  const opts=['all','common','uncommon','rare','legendary'];
+  const lbls={all:'All Fish',common:'Common',uncommon:'Uncommon',rare:'Rare',legendary:'Legendary'};
+  $('trophy-filters').innerHTML=opts.map(o=>`<button class="tf-btn${G.trophyFilter===o?' active':''}" onclick="setTrophyFilter('${o}')">${lbls[o]}</button>`).join('');
+}
+function setTrophyFilter(f){G.trophyFilter=f;renderTrophyFilters();renderTrophyGrid();}
+function renderTrophyGrid(){
+  const fish=G.trophyFilter==='all'?FISH:FISH.filter(f=>f.rarity===G.trophyFilter);
+  $('trophy-grid').innerHTML=fish.map(f=>{
+    const rec=G.trophyCache[f.id];const col=rc(f.rarity);
+    return`<div class="tcard">
+      <div class="tcard-name">${f.label}</div>
+      <div class="tcard-rar" style="color:${col};">${rl(f.rarity)}</div>
+      ${rec?`<div class="tcard-rec"><div><div class="tcard-w">${fmtW(rec.w)}</div><div class="tcard-len">${fmtL(rec.l)} long</div></div><div class="tcard-holder"><div class="tcard-hname">${rec.name}</div><div class="tcard-hperiod">${rec.period} Hour</div></div></div>`:'<div class="tcard-empty">NO RECORD YET</div>'}
+      <div class="tcard-max">MAX: ${f.wMax} lbs · ${f.lMax}"</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// FIREBASE
+// ═══════════════════════════════════════
+async function saveScore(){
+  try{
+    const res=await fetch(FB+'/scores.json',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:G.name,score:G.score,period:G.period,location:G.location.id,ts:Date.now()})});
+    dbg('Score saved:',await res.text());
+  }catch(e){dbg('Save err:',e.message);}
+}
+async function saveCatch(fishId,weight,length,pts){
+  try{
+    await fetch(FB+'/scores.json',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:G.name,period:G.period,location:G.location.id,fishId,weight,length,score:pts,ts:Date.now()})});
+  }catch(e){dbg('Catch save err:',e.message);}
+}
+async function loadSidebarLB(){
+  try{
+    const r=await fetch(FB+'/scores.json');const data=await r.json();
+    if(!data){$('sidebar-lb').innerHTML='<span style="color:#1e2d40;font-family:Orbitron,monospace;font-size:.62rem;">No scores yet</span>';return;}
+    const scores=Object.values(data).filter(e=>e.location===G.location.id).sort((a,b)=>b.score-a.score).slice(0,3);
+    const medals=['🥇','🥈','🥉'],rk=['r1','r2','r3'];
+    $('sidebar-lb').innerHTML=scores.length?scores.map((s,i)=>`<div class="sb-row"><span class="sb-rank ${rk[i]}">${medals[i]}</span><span class="sb-name">${s.name}</span><span class="sb-score">$${s.score}</span></div>`).join('')
+      :'<span style="color:#1e2d40;font-family:Orbitron,monospace;font-size:.62rem;">No scores yet</span>';
+  }catch(e){dbg('SB err:',e.message);}
+}
+async function loadFinalLB(){
+  try{
+    const r=await fetch(FB+'/scores.json');const data=await r.json();
+    if(!data){$('lb-list').innerHTML='<span style="color:#334155;">No scores yet!</span>';return;}
+    const scores=Object.values(data).filter(e=>e.location===G.location.id).sort((a,b)=>b.score-a.score).slice(0,8);
+    $('lb-list').innerHTML=scores.map((s,i)=>`<div class="lb-row"><div class="lb-rank ${i<3?'t':''}">${i+1}</div><div class="lb-name">${s.name}</div><div class="lb-score">$${s.score}</div><div class="lb-period">${s.period||''}</div></div>`).join('')||'<span style="color:#334155;">No scores yet!</span>';
+  }catch(e){dbg('Final LB err:',e.message);}
+}
+</script>
+</body>
+</html>
