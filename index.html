@@ -796,7 +796,7 @@ function resetFishing(){
   if(G.biteTimer)clearTimeout(G.biteTimer);
   // Hide video, show plain dark water panel with CLICK TO CAST
   const lv=$('lure-vid');
-  lv.pause();lv.src='';lv.style.display='none';
+  lv.pause();lv.removeAttribute('src');lv.load();lv.style.display='none';
   dbg('Fishing reset');
 }
 function onWaterClick(){if(G.bitePending)doReel();else if(G.phase==='fishing'&&!$('btn-cast').disabled)doCast();}
@@ -834,7 +834,8 @@ function doReel(){
   dbg('Fish:',G.fish.label,'('+G.fish.rarity+')');
   // Play fishon.mp4 transition first
   const fov=$('fishon-vid');
-  fov.src='fishon.mp4';
+  const fishonVids=['fishon.mp4','fishon2.mp4','fishon3.mp4','fishon4.mp4'];
+  fov.src=fishonVids[Math.floor(Math.random()*fishonVids.length)];
   fov.muted=false;
   show('s-fishon');
   fov.play().catch(e=>{dbg('fishon err:',e.message);startReelScreen();});
