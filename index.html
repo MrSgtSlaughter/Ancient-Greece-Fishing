@@ -447,6 +447,7 @@ body{font-family:'Exo 2',sans-serif;background:#050c1a;color:#eee;height:100vh;o
   <div class="bottom">
     <div class="cast-panel">
       <div class="water" id="water" onclick="onWaterClick()">
+        <img id="cast-thumb" src="cast.jpg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:block;">
         <video id="lure-vid" muted playsinline loop style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none;min-width:100%;min-height:100%;"></video>
         <div class="water-vignette"></div>
         <div class="wline"></div><div class="wline"></div><div class="wline"></div>
@@ -797,6 +798,7 @@ function resetFishing(){
   // Hide video, show plain dark water panel with CLICK TO CAST
   const lv=$('lure-vid');
   lv.pause();lv.removeAttribute('src');lv.load();lv.style.display='none';
+  $('cast-thumb').style.display='block';
   dbg('Fishing reset');
 }
 function onWaterClick(){if(G.bitePending)doReel();else if(G.phase==='fishing'&&!$('btn-cast').disabled)doCast();}
@@ -809,6 +811,7 @@ function doCast(){
   // Hide thumbnail, show reel video
   const lv2=$('lure-vid');
   const rn2='reel'+(Math.floor(Math.random()*4)+1)+'.mp4';
+  $('cast-thumb').style.display='none';
   lv2.style.display='block';
   lv2.src=rn2;lv2.load();lv2.play().catch(e=>dbg('lure2 err:',e.message));
   dbg('Casting — playing lure vid:',rn2);
