@@ -45,6 +45,20 @@ body{font-family:'Exo 2',sans-serif;background:#050c1a;color:#eee;height:100vh;o
   box-shadow:0 4px 20px rgba(245,200,66,.35)}
 .gbtn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 30px rgba(245,200,66,.5)}
 .gbtn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.continue-card{background:linear-gradient(135deg,#0a2a0a,#0f3d1a);border:2px solid #4ade80;
+  border-radius:14px;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;
+  gap:24px;width:360px;cursor:pointer;transition:all .2s;box-shadow:0 0 24px rgba(74,222,128,.15)}
+.continue-card:hover{border-color:#86efac;box-shadow:0 0 36px rgba(74,222,128,.3);transform:translateY(-2px)}
+.cc-left{display:flex;flex-direction:column;gap:3px}
+.cc-eye{font-family:'Orbitron',monospace;font-size:.48rem;letter-spacing:3px;color:#4ade80}
+.cc-name{font-family:'Cinzel',serif;font-size:1.1rem;color:#f1f5f9}
+.cc-meta{font-family:'Orbitron',monospace;font-size:.56rem;color:#475569;margin-top:1px}
+.cc-score{font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:700;color:#4ade80}
+.cc-label{font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:3px;color:#334155}
+.cc-del{background:none;border:1px solid #334155;border-radius:6px;padding:4px 8px;
+  color:#475569;font-family:'Orbitron',monospace;font-size:.5rem;cursor:pointer;
+  letter-spacing:1px;transition:all .2s;margin-top:4px;display:block}
+.cc-del:hover{border-color:#dc2626;color:#f87171}
 
 /* ── LOCATION ── */
 #s-location{flex-direction:column;align-items:center;justify-content:center;
@@ -388,6 +402,20 @@ body{font-family:'Exo 2',sans-serif;background:#050c1a;color:#eee;height:100vh;o
       <div class="t-main">Ancient <span>Greece</span><br>Fishing Challenge</div>
       <div class="t-sub">Cast · Answer · Reel · Conquer</div>
     </div>
+    <div id="continue-card-wrap" style="display:none;">
+      <div class="continue-card" onclick="loadSave()">
+        <div class="cc-left">
+          <div class="cc-eye">💾 SAVED GAME</div>
+          <div class="cc-name" id="cc-name">—</div>
+          <div class="cc-meta" id="cc-meta">—</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="cc-label">Cash</div>
+          <div class="cc-score" id="cc-score">$0</div>
+          <button class="cc-del" onclick="deleteSave(event)">✕ DELETE</button>
+        </div>
+      </div>
+    </div>
     <div class="entry">
       <label>ENTER YOUR NAME</label>
       <input type="text" id="inp-name" placeholder="Fisherman's name..." maxlength="20">
@@ -452,8 +480,7 @@ body{font-family:'Exo 2',sans-serif;background:#050c1a;color:#eee;height:100vh;o
         <div class="water-vignette"></div>
         <div class="wline"></div><div class="wline"></div><div class="wline"></div>
         <div class="cta" id="cta-cast">
-          <div class="cta-icon">🎣</div>
-          <div class="cta-txt">CLICK TO CAST</div>
+          <div class="cta-txt" style="font-size:.75rem;letter-spacing:5px;text-shadow:0 2px 12px rgba(0,0,0,.8);">CLICK TO CAST</div>
         </div>
         <div class="cta" id="cta-wait" style="display:none;">
           <div style="font-family:Orbitron,monospace;font-size:.58rem;letter-spacing:3px;color:#94a3b8;">WAITING FOR BITE</div>
@@ -639,7 +666,7 @@ const G={
   bitePending:false,biteTimer:null,
   bait:null,shopVisits:3,
   trophyFilter:'all',trophyCache:{},
-  musicOn:false,lobbyOn:false,muted:false,
+  musicOn:false,lobbyOn:false,muted:false,_changingLake:false,
 };
 
 // ═══════════════════════════════════════
@@ -662,6 +689,7 @@ function safePlay(el,src){
   const p=el.play();
   if(p!==undefined)p.catch(e=>dbg('vid err',src.split('/').pop(),e.message));
 }
+checkForSave();
 document.addEventListener('keydown',e=>{if(e.key==='d'||e.key==='D'){const p=$('dbg');p.style.display=p.style.display==='block'?'none':'block';}});
 
 // ═══════════════════════════════════════
@@ -698,6 +726,89 @@ $('mute-btn').addEventListener('click',()=>{
 // ═══════════════════════════════════════
 // TITLE
 // ═══════════════════════════════════════
+
+// ═══════════════════════════════════════
+// SAVE / LOAD
+// ═══════════════════════════════════════
+const SAVE_KEY='agfc_save_v1';
+
+function saveGame(){
+  try{
+    const data={
+      name:G.name, period:G.period, score:G.score, lives:G.lives,
+      locationId:G.location?G.location.id:null,
+      baitId:G.bait?G.bait.id:'worm',
+      shopVisits:G.shopVisits,
+      trophyCache:G.trophyCache,
+      usedQ:G.usedQ,
+      ts:Date.now()
+    };
+    localStorage.setItem(SAVE_KEY,JSON.stringify(data));
+    dbg('Game saved: $'+G.score+' — '+G.name);
+  }catch(e){dbg('Save err:',e.message);}
+}
+
+function loadSave(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw)return;
+    const data=JSON.parse(raw);
+    G.name=data.name||'';
+    G.period=data.period||'';
+    G.score=data.score||0;
+    G.lives=data.lives||3;
+    G.location=LOCATIONS.find(l=>l.id===data.locationId)||LOCATIONS[0];
+    G.bait=BAITS.find(b=>b.id===data.baitId)||BAITS[0];
+    G.shopVisits=data.shopVisits!=null?data.shopVisits:3;
+    G.trophyCache=data.trophyCache||{};
+    G.usedQ=data.usedQ||[];
+    G.phase='fishing';
+    // Restore HUD
+    updateCash();updateLives();
+    $('hud-name').textContent=G.name;
+    $('hud-period').textContent=G.period;
+    $('hud-loc').textContent=G.location.name;
+    $('hud-cast').textContent='CAST LEVEL '+G.location.cast;
+    $('g-bait-icon').textContent=G.bait.icon;
+    $('g-bait-name').textContent=G.bait.name.split(' ')[0];
+    if(G.shopVisits<=0)$('btn-shop').classList.add('locked');
+    else $('btn-shop').classList.remove('locked');
+    stopLobby();
+    safePlay($('game-bg'),G.location.id+'.mp4');
+    startMusic();
+    loadSidebarLB();
+    show('s-game');
+    resetFishing();
+    notif('💾 Game loaded — welcome back, '+G.name+'!',2800);
+    dbg('Loaded save: '+G.name+' $'+G.score);
+  }catch(e){dbg('Load err:',e.message);}
+}
+
+function deleteSave(e){
+  e.stopPropagation();
+  localStorage.removeItem(SAVE_KEY);
+  $('continue-card-wrap').style.display='none';
+  notif('🗑️ Save deleted',1800);
+  dbg('Save deleted');
+}
+
+function checkForSave(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw)return;
+    const data=JSON.parse(raw);
+    if(!data.name||!data.locationId)return;
+    const loc=LOCATIONS.find(l=>l.id===data.locationId);
+    if(!loc)return;
+    const age=Date.now()-data.ts;
+    const ageStr=age<3600000?Math.round(age/60000)+' min ago':age<86400000?Math.round(age/3600000)+' hr ago':Math.round(age/86400000)+' days ago';
+    $('cc-name').textContent=data.name;
+    $('cc-meta').textContent=data.period+' Hour · '+loc.name+' · '+ageStr;
+    $('cc-score').textContent='$'+data.score;
+    $('continue-card-wrap').style.display='block';
+  }catch(e){dbg('checkSave err:',e.message);}
+}
+
 document.querySelectorAll('.pbtn').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('.pbtn').forEach(x=>x.classList.remove('sel'));
   b.classList.add('sel');G.period=b.dataset.p;checkReady();startLobby();
@@ -742,7 +853,12 @@ function buildLocGrid(){
     grid.appendChild(card);
   });
 }
-$('btn-loc-go').addEventListener('click',()=>{if(G.location)startGame();});
+$('btn-loc-go').addEventListener('click',()=>{
+  if(!G.location)return;
+  const isNew=!G._changingLake;
+  G._changingLake=false;
+  startGame(isNew);
+});
 
 async function loadAllLB(){
   try{
@@ -761,9 +877,16 @@ async function loadAllLB(){
 // ═══════════════════════════════════════
 // GAME START
 // ═══════════════════════════════════════
-function startGame(){
-  G.score=0;G.lives=3;G.usedQ=[];G.phase='fishing';
-  G.bait=BAITS[0];G.shopVisits=3;
+function startGame(isNewGame=true){
+  if(isNewGame){
+    // Full reset — brand new game
+    G.score=0;G.lives=3;G.usedQ=[];G.phase='fishing';
+    G.bait=BAITS[0];G.shopVisits=3;G.trophyCache={};
+  }else{
+    // Changing lake — keep cash, lives, bait, trophies
+    G.usedQ=[];G.phase='fishing';
+    notif('📍 Now fishing at '+G.location.name+'!',2200);
+  }
   updateCash();updateLives();
   $('hud-name').textContent=G.name;
   $('hud-period').textContent=G.period;
@@ -771,16 +894,20 @@ function startGame(){
   $('hud-cast').textContent='CAST LEVEL '+G.location.cast;
   $('g-bait-icon').textContent=G.bait.icon;
   $('g-bait-name').textContent=G.bait.name.split(' ')[0];
-  $('btn-shop').classList.remove('locked');
+  if(G.shopVisits<=0)$('btn-shop').classList.add('locked');
+  else $('btn-shop').classList.remove('locked');
   safePlay($('game-bg'),G.location.id+'.mp4');
   startMusic();
   loadSidebarLB();
   show('s-game');
   resetFishing();
+  saveGame();
 }
 function changeLocation(){
   stopReelSound();if(G.biteTimer)clearTimeout(G.biteTimer);
-  G.bitePending=false;G.phase='title';
+  G.bitePending=false;
+  // Flag that we're switching lakes (not quitting)
+  G._changingLake=true;
   show('s-location');loadAllLB();
 }
 
@@ -1041,7 +1168,7 @@ function showCatch(){
   saveCatch(f.id,weight,length,f.pts);
   dbg('Caught:',f.label,fmtW(weight),isRec?'NEW RECORD!':'');
 }
-function returnFishing(){G.phase='fishing';fadeMusic(0.15,600);show('s-game');resetFishing();}
+function returnFishing(){G.phase='fishing';fadeMusic(0.15,600);show('s-game');resetFishing();saveGame();}
 
 // ═══════════════════════════════════════
 // LIVES & GAME OVER
@@ -1049,13 +1176,14 @@ function returnFishing(){G.phase='fishing';fadeMusic(0.15,600);show('s-game');re
 function loseLife(msg){
   G.lives--;updateLives();notif('💔 '+msg,2500);dbg('Lives:',G.lives);
   if(G.lives<=0)setTimeout(endGame,1200);
-  else{G.phase='fishing';fadeMusic(0.15,400);show('s-game');resetFishing();}
+  else{G.phase='fishing';fadeMusic(0.15,400);show('s-game');resetFishing();saveGame();}
 }
 async function endGame(){
   G.phase='gameover';
   $('go-score').textContent='$'+G.score;
   $('go-loc').textContent='📍 '+G.location.name+' · Cast '+G.location.cast;
   show('s-gameover');
+  localStorage.removeItem(SAVE_KEY);// clear save — game is over
   await saveScore();await loadFinalLB();
 }
 
@@ -1103,6 +1231,7 @@ function buyBait(){
   G.score-=shopSel.price;G.bait=shopSel;shopSel=null;
   updateCash();$('g-bait-icon').textContent=G.bait.icon;$('g-bait-name').textContent=G.bait.name.split(' ')[0];
   notif(G.bait.icon+' '+G.bait.name+' equipped!',2200);
+  saveGame();
   setTimeout(closeShop,600);
 }
 function updateActiveDisplay(){
