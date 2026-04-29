@@ -374,6 +374,32 @@ body{font-family:'Exo 2',sans-serif;background:#050c1a;color:#eee;height:100vh;o
 #dbg{position:fixed;bottom:4px;left:4px;z-index:9999;background:rgba(0,0,0,.88);
   color:#0f0;font-family:monospace;font-size:.65rem;padding:6px 10px;border-radius:6px;
   max-width:420px;max-height:130px;overflow-y:auto;border:1px solid #0f0;display:none}
+
+/* ── TOURNAMENT ── */
+#s-tournament{align-items:center;justify-content:center;position:relative;overflow:hidden}
+#s-tournament::before{content:'';position:absolute;inset:0;background:url('map.png') center/cover no-repeat;z-index:0}
+#s-tournament::after{content:'';position:absolute;inset:0;background:rgba(3,7,18,.93);z-index:1}
+.tourn-panel{position:relative;z-index:2;background:var(--panel);border:2px solid var(--gold);
+  border-radius:22px;padding:26px 32px;width:700px;max-width:96vw;max-height:92vh;
+  display:flex;flex-direction:column;gap:10px;box-shadow:0 0 80px rgba(245,200,66,.25)}
+.tourn-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.tourn-title{font-family:'Cinzel',serif;font-size:1.6rem;color:var(--gold);
+  text-shadow:0 0 20px rgba(245,200,66,.4)}
+.tourn-sub{font-family:'Orbitron',monospace;font-size:.5rem;letter-spacing:3px;color:#475569;margin-top:3px}
+.tourn-status{font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:2px;margin-top:4px}
+.tourn-count{font-family:'Orbitron',monospace;font-size:.5rem;letter-spacing:2px;color:#334155;text-align:right;margin-top:4px}
+.tourn-cols{display:flex;gap:9px;padding:5px 11px;font-family:'Orbitron',monospace;font-size:.44rem;
+  letter-spacing:3px;color:#1e2d40;text-transform:uppercase;border-bottom:1px solid #0e1e30}
+.tourn-lb-list{display:flex;flex-direction:column;gap:4px;overflow-y:auto;max-height:48vh;padding-right:2px}
+.tourn-row{display:flex;align-items:center;gap:9px;padding:7px 11px;
+  background:rgba(255,255,255,.03);border-radius:8px;border:1px solid #0e1e30}
+.tourn-row.tourn-podium{background:rgba(245,200,66,.05);border-color:rgba(245,200,66,.14)}
+.tourn-rank{width:30px;font-family:'Orbitron',monospace;font-size:.75rem;color:#334155;font-weight:700;text-align:center}
+.tourn-name{flex:1;color:#e2e8f0;font-size:.84rem;font-family:'Exo 2',sans-serif;
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.tourn-period{width:54px;font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;text-align:center}
+.tourn-score{width:84px;color:#4ade80;font-weight:700;font-family:'Orbitron',monospace;
+  font-size:.75rem;text-align:right}
 </style>
 </head>
 <body>
@@ -466,6 +492,7 @@ body{font-family:'Exo 2',sans-serif;background:#050c1a;color:#eee;height:100vh;o
       <button class="hud-btn gold-btn" id="btn-shop" onclick="openShop()">🏪 SHOP</button>
       <button class="hud-btn gold-btn" onclick="openTrophy()">🏆</button>
       <button class="hud-btn green-btn" onclick="changeLocation()">🗺️</button>
+      <button class="hud-btn" id="btn-tourn" onclick="openTournament()" style="border-color:#ffd700;color:#ffd700;background:linear-gradient(135deg,#3a1500,#7a3a00);display:none;">🥇 TOURNEY</button>
     </div>
   </div>
   <div class="sidebar">
@@ -638,6 +665,34 @@ body{font-family:'Exo 2',sans-serif;background:#050c1a;color:#eee;height:100vh;o
   </div>
 </div>
 
+<!-- ══ TOURNAMENT ══ -->
+<div class="screen" id="s-tournament">
+  <div class="tourn-panel">
+    <div class="tourn-header">
+      <div>
+        <div class="tourn-title">🎣 April 29th Fishing Tournament</div>
+        <div class="tourn-sub">8:45 AM – 3:09 PM · Pioneer Middle School · Top 25 Anglers</div>
+        <div class="tourn-status" id="tourn-status"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+        <button class="btn-back" onclick="closeTournament()">[ BACK TO FISHING ]</button>
+        <button class="hud-btn gold-btn" onclick="loadTournamentLB()" style="font-size:.5rem;padding:5px 12px;">🔄 REFRESH</button>
+        <div class="tourn-count" id="tourn-count"></div>
+      </div>
+    </div>
+    <div id="tourn-empire-banner"></div>
+    <div class="tourn-cols">
+      <div style="width:30px;"></div>
+      <div style="flex:1;">Angler</div>
+      <div style="width:54px;">Hour</div>
+      <div style="width:84px;text-align:right;">Cash</div>
+    </div>
+    <div class="tourn-lb-list" id="tourn-lb-list">
+      <span style="color:#334155;font-family:Orbitron,monospace;font-size:.62rem;letter-spacing:2px;">Loading...</span>
+    </div>
+  </div>
+</div>
+
 <script>
 const FISH=[{"id": "bluegill", "label": "Bluegill", "rarity": "common", "pts": 10, "w": 35, "wMin": 0.25, "wMax": 2.0, "lMin": 5, "lMax": 12}, {"id": "perch", "label": "Yellow Perch", "rarity": "common", "pts": 10, "w": 30, "wMin": 0.25, "wMax": 2.5, "lMin": 5, "lMax": 14}, {"id": "rockbass", "label": "Rock Bass", "rarity": "common", "pts": 10, "w": 25, "wMin": 0.25, "wMax": 1.5, "lMin": 5, "lMax": 12}, {"id": "carp", "label": "Common Carp", "rarity": "common", "pts": 10, "w": 20, "wMin": 2.0, "wMax": 25.0, "lMin": 14, "lMax": 36}, {"id": "catfish", "label": "Catfish", "rarity": "common", "pts": 15, "w": 18, "wMin": 0.5, "wMax": 8.0, "lMin": 8, "lMax": 24}, {"id": "goby", "label": "Round Goby", "rarity": "common", "pts": 5, "w": 15, "wMin": 0.05, "wMax": 0.25, "lMin": 3, "lMax": 7}, {"id": "crayfish", "label": "Crayfish", "rarity": "common", "pts": 5, "w": 12, "wMin": 0.05, "wMax": 0.2, "lMin": 2, "lMax": 5}, {"id": "crappie", "label": "Crappie", "rarity": "uncommon", "pts": 15, "w": 10, "wMin": 0.5, "wMax": 3.5, "lMin": 7, "lMax": 16}, {"id": "sheephead", "label": "Sheephead", "rarity": "uncommon", "pts": 20, "w": 9, "wMin": 1.0, "wMax": 15.0, "lMin": 10, "lMax": 28}, {"id": "channelcatfish", "label": "Channel Catfish", "rarity": "uncommon", "pts": 25, "w": 8, "wMin": 2.0, "wMax": 30.0, "lMin": 12, "lMax": 36}, {"id": "largemouthbass", "label": "Largemouth Bass", "rarity": "uncommon", "pts": 30, "w": 7, "wMin": 1.0, "wMax": 10.0, "lMin": 10, "lMax": 26}, {"id": "brooktrout", "label": "Brook Trout", "rarity": "uncommon", "pts": 30, "w": 6, "wMin": 0.5, "wMax": 6.0, "lMin": 8, "lMax": 22}, {"id": "smallmouthbass", "label": "Smallmouth Bass", "rarity": "uncommon", "pts": 35, "w": 5, "wMin": 1.0, "wMax": 7.0, "lMin": 10, "lMax": 22}, {"id": "northernpike", "label": "Northern Pike", "rarity": "rare", "pts": 60, "w": 3, "wMin": 3.0, "wMax": 28.0, "lMin": 20, "lMax": 46}, {"id": "rainbowtrout", "label": "Rainbow Trout", "rarity": "rare", "pts": 60, "w": 3, "wMin": 1.0, "wMax": 15.0, "lMin": 12, "lMax": 32}, {"id": "walleye", "label": "Walleye", "rarity": "rare", "pts": 70, "w": 2, "wMin": 1.0, "wMax": 12.0, "lMin": 12, "lMax": 30}, {"id": "salmon", "label": "Chinook Salmon", "rarity": "rare", "pts": 75, "w": 2, "wMin": 5.0, "wMax": 40.0, "lMin": 24, "lMax": 46}, {"id": "freshwatersharkman", "label": "Freshwater Sharkman", "rarity": "legendary", "pts": 500, "w": 1, "wMin": 80, "wMax": 400, "lMin": 60, "lMax": 120}];
 const QUESTIONS=[{"q": "During the Paleolithic era, early humans primarily survived by doing which of the following?", "a": ["Hunting animals and gathering wild plants", "Farming crops and raising livestock", "Building permanent stone shelters", "Trading goods with nearby settlements"], "c": 0}, {"q": "Which of the following best describes a nomadic lifestyle as practiced by Paleolithic people?", "a": ["Moving from place to place to follow food sources", "Settling permanently near a river to grow crops", "Building large cities with organized governments", "Developing written laws to govern communities"], "c": 0}, {"q": "Cave paintings created during the Paleolithic era most likely served which purpose?", "a": ["Recording hunts and communicating with spiritual forces", "Decorating homes to show wealth and status", "Teaching children to read and write", "Mapping trade routes to distant regions"], "c": 0}, {"q": "Which development marks the END of the Paleolithic era?", "a": ["The shift from hunting and gathering to farming", "The invention of bronze tools and weapons", "The construction of the first pyramids", "The development of alphabetic writing"], "c": 0}, {"q": "Early Paleolithic humans used fire for which of the following purposes?", "a": ["Cooking food, providing warmth, and protection against predators", "Smelting metal ores to make weapons", "Signaling to distant trade partners", "Powering early machines and tools"], "c": 0}, {"q": "Which of the following tools was most commonly used by Paleolithic humans?", "a": ["Sharpened stone flakes used for cutting and scraping", "Bronze swords cast in clay molds", "Iron plows used to turn soil", "Clay pots fired in kilns"], "c": 0}, {"q": "Which development best characterizes the Neolithic Revolution?", "a": ["The shift from nomadic hunting and gathering to settled farming", "The creation of the first written legal codes", "The construction of large stone temples for worship", "The invention of the wheel for transportation"], "c": 0}, {"q": "How did the development of agriculture change early human societies during the Neolithic era?", "a": ["It allowed people to form permanent settlements and support larger populations", "It forced people to travel greater distances to find food", "It eliminated the need for any form of social organization", "It reduced the number of people who could survive in one place"], "c": 0}, {"q": "Which of the following is a direct result of the Neolithic shift to farming?", "a": ["Specialization of labor as not everyone needed to find food", "A decrease in the overall human population", "The disappearance of religious and spiritual practices", "The elimination of trade between communities"], "c": 0}, {"q": "Neolithic people domesticated animals primarily for which reason?", "a": ["To provide a reliable source of food, labor, and materials", "To use them as symbols of religious worship only", "To race them in organized competitions", "To prevent them from attacking settlements"], "c": 0}, {"q": "How did farming surpluses affect early Neolithic societies?", "a": ["They led to social inequality as some people accumulated more wealth", "They created a perfectly equal distribution of resources", "They caused all communities to merge into one large settlement", "They eliminated the need for any form of trade"], "c": 0}, {"q": "The ancient region of Mesopotamia was located between which two rivers?", "a": ["The Tigris and Euphrates Rivers", "The Nile and Congo Rivers", "The Indus and Ganges Rivers", "The Yellow and Yangtze Rivers"], "c": 0}, {"q": "Hammurabi is best remembered in history for which of the following achievements?", "a": ["Creating one of the earliest written codes of law", "Constructing the Great Pyramid of Giza", "Inventing the Phoenician alphabet", "Founding the city of Mohenjo-daro"], "c": 0}, {"q": "Which statement best describes the principle behind Hammurabi's Code?", "a": ["Punishments should be proportional to the crime committed", "All citizens should be treated equally regardless of class", "Only priests had the authority to enforce laws", "Laws applied only to slaves and conquered peoples"], "c": 0}, {"q": "The Sumerians of ancient Mesopotamia are credited with developing which of the following?", "a": ["One of the earliest systems of writing called cuneiform", "The first democratic government in the ancient world", "The construction of the Great Wall", "A strictly monotheistic religious tradition"], "c": 0}, {"q": "Ziggurats in ancient Mesopotamia served which primary function?", "a": ["Acting as temples to connect the people to their gods", "Storing grain for distribution during famines", "Housing soldiers and military equipment", "Serving as royal palaces for Mesopotamian kings"], "c": 0}, {"q": "Which geographic feature most helped early Mesopotamian civilizations develop agriculture?", "a": ["Annual flooding that deposited rich silt along river banks", "Vast forests that provided abundant timber for building", "Mountain ranges that blocked all invading armies", "A dry desert climate that naturally prevented disease"], "c": 0}, {"q": "The Phoenicians are most historically significant for which of the following contributions?", "a": ["Developing an alphabet that became the basis for many modern writing systems", "Building the largest empire in the ancient Mediterranean world", "Inventing the wheel and adapting it for transportation", "Constructing the first system of aqueducts in the ancient world"], "c": 0}, {"q": "Phoenician city-states like Tyre and Sidon grew wealthy primarily because of which activity?", "a": ["Long-distance sea trade across the Mediterranean", "Conquering and taxing neighboring kingdoms", "Mining large deposits of gold and silver", "Developing highly productive agricultural land"], "c": 0}, {"q": "Which of the following best explains why the Phoenician alphabet spread so widely?", "a": ["It was simple to learn and useful for recording trade transactions", "It was enforced by a powerful Phoenician military empire", "It was the only ancient writing system that included vowel sounds", "It was required in all schools throughout conquered territories"], "c": 0}, {"q": "Phoenician traders are credited with spreading which valuable dye that became a symbol of royalty?", "a": ["Tyrian purple, made from a type of sea snail", "Indigo blue, made from plant extracts", "Saffron yellow, made from dried flower stamens", "Crimson red, made from powdered iron oxide"], "c": 0}, {"q": "The Nile River was essential to ancient Egyptian civilization primarily because it did which of the following?", "a": ["Provided rich silt for farming and a reliable source of water for irrigation", "Created a natural barrier that prevented all forms of invasion", "Allowed Egypt to build the largest naval fleet in the ancient world", "Connected Egypt directly to overland trade routes in Central Asia"], "c": 0}, {"q": "Which of the following best describes the role of the pharaoh in ancient Egyptian society?", "a": ["The pharaoh was both a political ruler and a divine figure considered a living god", "The pharaoh was elected by a council of priests each generation", "The pharaoh served as a military general but held no religious authority", "The pharaoh was a symbolic figurehead who held no real political power"], "c": 0}, {"q": "Ancient Egyptians developed hieroglyphics primarily to do which of the following?", "a": ["Record religious texts, government records, and important historical events", "Communicate secretly with foreign trading partners across the sea", "Teach children the principles of mathematics and natural science", "Decorate buildings and monuments for purely artistic purposes"], "c": 0}, {"q": "The construction of pyramids in ancient Egypt served which primary purpose?", "a": ["Acting as elaborate tombs to help pharaohs reach the afterlife", "Storing the grain supply for the population during periods of famine", "Serving as temples where all Egyptian citizens could worship their gods", "Functioning as fortresses designed to defend Egypt against invasion"], "c": 0}, {"q": "The Egyptian Book of the Dead was most closely associated with which aspect of Egyptian culture?", "a": ["Beliefs about the afterlife and the judgment of the human soul", "Instructions for building pyramids and decorating temple walls", "Military strategies used for conquering neighboring territories", "Agricultural techniques for farming the Nile River Valley"], "c": 0}, {"q": "The Kingdom of Kush was located in which region relative to ancient Egypt?", "a": ["South of Egypt along the upper Nile River in what is now Sudan", "North of Egypt along the coast of the Mediterranean Sea", "East of Egypt across the Red Sea on the Arabian Peninsula", "West of Egypt deep in the interior of the Sahara Desert"], "c": 0}, {"q": "Which of the following best describes the relationship between Kush and ancient Egypt?", "a": ["They had a complex relationship involving trade, conflict, and cultural exchange", "Kush and Egypt were constantly at war and never engaged in trade", "Egypt completely controlled Kush as a province throughout all of its history", "Kush had no meaningful contact with Egypt due to geographic barriers"], "c": 0}, {"q": "Kush became an important civilization largely because of its control of which resource?", "a": ["Iron production and trade routes connecting sub-Saharan Africa to Egypt", "Large deposits of limestone used for constructing pyramids and monuments", "Fertile farmland that produced surplus grain for the entire region", "Dense timber forests that supplied wood for Egyptian shipbuilding"], "c": 0}, {"q": "The city of Meroe became significant in Kushite history for which reason?", "a": ["It became the new capital and a major center of iron smelting and production", "It was the location where Kush first successfully defeated the Egyptian army", "It served as the sacred religious capital where all Kushite gods were worshipped", "It was the port city that controlled all trade along the Red Sea coast"], "c": 0}, {"q": "The cities of Mohenjo-daro and Harappa are most significant because they demonstrate which feature?", "a": ["Advanced urban planning with grid-like streets and sophisticated drainage systems", "The earliest use of iron tools and weapons in the entire ancient world", "A written language system that has been fully translated by modern scholars", "A powerful military that conquered and controlled most of the ancient world"], "c": 0}, {"q": "Which of the following best describes a unique characteristic of Indus Valley cities?", "a": ["They had remarkably uniform building standards and no evidence of large palaces or temples", "They were deliberately built on high ground far from rivers to avoid annual flooding", "They were ruled by powerful kings whose enormous palaces dominated the city center", "They had no evidence of any trade connections with other ancient civilizations"], "c": 0}, {"q": "Chandragupta Maurya is historically significant for which of the following achievements?", "a": ["Unifying most of the Indian subcontinent under a single empire for the first time", "Writing the earliest and most sacred version of the Hindu Vedas", "Commissioning the famous cave paintings and temples at Ajanta", "Introducing Buddhist teachings to China and Southeast Asia"], "c": 0}, {"q": "The Arthashastra was primarily a text about which subject?", "a": ["Political strategy, economics, and the art of governing a large empire", "Sacred religious rituals and prayers dedicated to the Hindu gods", "Mathematical principles and geometric formulas for constructing temples", "Military tactics and strategies for defeating enemy cavalry in battle"], "c": 0}, {"q": "Which of the following best explains why the Indus Valley writing system remains a mystery?", "a": ["It has never been deciphered because no bilingual text like the Rosetta Stone exists", "All written records were deliberately destroyed by conquering invading armies", "The Indus Valley people did not actually develop a true writing system", "The texts were written on organic materials that completely decomposed over time"], "c": 0}, {"q": "The concept of the Mandate of Heaven in ancient China was used primarily to justify which idea?", "a": ["A ruler whose government is just and fair has the approval of heaven to rule", "All Chinese citizens have the right to vote for and remove their leaders", "The emperor is the literal divine son of the sun god and cannot be questioned", "Military conquest is the only legitimate and recognized way to gain power"], "c": 0}, {"q": "Which dynasty is credited with first unifying China under a single centralized government?", "a": ["The Qin Dynasty under the rule of Shi Huangdi", "The Han Dynasty during the reign of Emperor Wu", "The Zhou Dynasty during the reign of King Wen", "The Shang Dynasty during the reign of King Tang"], "c": 0}, {"q": "Shi Huangdi is remembered for ordering the construction of which major project?", "a": ["An early version of the Great Wall connecting existing regional defensive walls", "A massive canal system designed to connect northern and southern China", "A network of imperial roads radiating outward from the capital city", "A series of heavily fortified garrison cities along the Silk Road"], "c": 0}, {"q": "Confucius taught that a stable and harmonious society was best achieved through which of the following?", "a": ["Respect for family relationships, proper behavior, and loyalty to rulers", "Democratic elections and the guarantee of equal rights for all citizens", "Military strength and the systematic conquest of neighboring kingdoms", "Individual freedom and the deliberate rejection of all traditional customs"], "c": 0}, {"q": "The Silk Road was significant in ancient Chinese history primarily because it did which of the following?", "a": ["Connected China to Central Asia and the Mediterranean, spreading goods and ideas", "Allowed China to build the largest and most powerful navy in the ancient world", "Created a geographic barrier that successfully prevented foreign armies from invading", "Provided the raw stone and timber materials needed to construct the Great Wall"], "c": 0}, {"q": "Which of the following best describes the social structure of ancient Chinese society under the Zhou Dynasty?", "a": ["A hierarchical system with the king at the top followed by lords, warriors, farmers, and artisans", "A democratic system in which all free adult men could participate in government decisions", "A theocratic system ruled entirely by Buddhist monks and religious priests", "An egalitarian system with no formal social classes or meaningful distinctions between people"], "c": 0}, {"q": "Which of the following best describes the form of government developed in ancient Athens?", "a": ["A direct democracy in which male citizens voted on laws and government policies", "A representative democracy in which elected officials made all governmental decisions", "A monarchy in which a single hereditary king held all political and military power", "An oligarchy in which a small group of wealthy landowners controlled the government"], "c": 0}, {"q": "The Spartan agoge was a rigorous training system designed primarily to achieve which goal?", "a": ["Producing disciplined and physically capable soldiers loyal to the Spartan state", "Educating children in philosophy, advanced mathematics, and the literary arts", "Teaching young people the complex religious rituals required for temple service", "Preparing young merchants to conduct long-distance trade across the Greek world"], "c": 0}, {"q": "How did the role of women in Sparta differ most significantly from their role in Athens?", "a": ["Spartan women could own property and were encouraged to exercise, while Athenian women had very limited public roles", "Athenian women were expected to serve in the military while Spartan women stayed at home", "Spartan women could vote and speak in the assembly while Athenian women could not", "Athenian women managed all commercial trade and business while Spartan women did not"], "c": 0}, {"q": "The Persian Wars were significant to Greek history primarily because they did which of the following?", "a": ["United many Greek city-states in defense of their independence and strengthened Greek confidence", "Permanently and completely ended all future conflict between Greece and the Persian Empire", "Caused Athens and Sparta to form a permanent and equal political and military union", "Led directly and immediately to the military conquest of Persia by Alexander the Great"], "c": 0}, {"q": "Which Greek philosopher is best associated with the method of teaching through systematic questioning?", "a": ["Socrates, who questioned Athenians in public to examine their assumptions and beliefs", "Plato, who wrote the Republic as a detailed description of an ideal government", "Aristotle, who systematically classified plants, animals, and forms of government", "Pythagoras, who developed the famous mathematical theorem about right triangles"], "c": 0}, {"q": "Pericles is most credited with which achievement in Athenian history?", "a": ["Expanding democracy by paying citizens for jury service and public office", "Writing the first Athenian law code that applied equally to all citizens", "Leading Athens to a decisive naval victory over Persia at the Battle of Salamis", "Building the first agora where Athenian citizens could gather to discuss politics"], "c": 0}, {"q": "Which of the following was a key difference between Athenian democracy and modern democracy?", "a": ["Athenian democracy excluded women, slaves, and foreigners from participation", "Athenian democracy required citizens to be appointed rather than elected", "Athenian democracy gave equal voting rights to all people living in Athens", "Athenian democracy was controlled by a single elected president with broad powers"], "c": 0}, {"q": "What type of government did Sparta have?", "a": ["Oligarchy \u2014 ruled by a small group of powerful leaders", "Democracy \u2014 all citizens voted on major decisions", "Monarchy \u2014 a single hereditary king held all power", "Theocracy \u2014 priests governed in the name of the gods"], "c": 0}, {"q": "Which of the following best describes the Helots in Spartan society?", "a": ["An enslaved population forced to farm land for Spartan citizens", "A class of skilled craftsmen who made weapons for the military", "A group of elected officials who advised the Spartan kings", "A special unit of elite soldiers trained from birth for combat"], "c": 0}];
@@ -781,6 +836,7 @@ function loadSave(){
     resetFishing();
     notif('💾 Game loaded — welcome back, '+G.name+'!',2800);
     dbg('Loaded save: '+G.name+' $'+G.score);
+    checkTournamentBtn();
   }catch(e){dbg('Load err:',e.message);}
 }
 
@@ -902,6 +958,7 @@ function startGame(isNewGame=true){
   show('s-game');
   resetFishing();
   saveGame();
+  checkTournamentBtn();
 }
 function changeLocation(){
   stopReelSound();if(G.biteTimer)clearTimeout(G.biteTimer);
@@ -1184,7 +1241,7 @@ async function endGame(){
   $('go-loc').textContent='📍 '+G.location.name+' · Cast '+G.location.cast;
   show('s-gameover');
   localStorage.removeItem(SAVE_KEY);// clear save — game is over
-  await saveScore();await loadFinalLB();
+  await saveScore();await saveTournamentScore();await loadFinalLB();
 }
 
 // ═══════════════════════════════════════
@@ -1302,6 +1359,106 @@ async function loadSidebarLB(){
       :'<span style="color:#1e2d40;font-family:Orbitron,monospace;font-size:.62rem;">No scores yet</span>';
   }catch(e){dbg('SB err:',e.message);}
 }
+// ═══════════════════════════════════════
+// TOURNAMENT — APRIL 29, 2026
+// ═══════════════════════════════════════
+const TOURN_START = new Date('2026-04-29T12:45:00Z').getTime(); // 8:45 AM EDT
+const TOURN_END   = new Date('2026-04-29T19:09:00Z').getTime(); // 3:09 PM EDT
+const TOURN_FB    = FB + '/tournament_apr29.json';
+const EMPIRE_COLORS = {'1st':'#f87171','2nd':'#4ade80','5th':'#facc15','6th':'#60a5fa'};
+const EMPIRE_NAMES  = {'1st':'1st Hour Empire','2nd':'2nd Hour Empire','5th':'5th Hour Empire','6th':'6th Hour Empire'};
+
+function isTournamentActive(){const n=Date.now();return n>=TOURN_START&&n<=TOURN_END;}
+
+function checkTournamentBtn(){
+  const btn=$('btn-tourn');
+  if(!btn)return;
+  btn.style.display=isTournamentActive()?'inline-flex':'none';
+}
+
+async function saveTournamentScore(){
+  if(!isTournamentActive())return;
+  try{
+    await fetch(TOURN_FB,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:G.name,score:G.score,period:G.period,location:G.location.id,ts:Date.now()})});
+    dbg('Tournament score saved');
+  }catch(e){dbg('Tourn save err:',e.message);}
+}
+
+function openTournament(){
+  const active=isTournamentActive();
+  const ended=Date.now()>TOURN_END;
+  const s=$('tourn-status');
+  if(active){s.textContent='🟢 TOURNAMENT ACTIVE';s.style.color='#4ade80';}
+  else if(ended){s.textContent='🔴 TOURNAMENT ENDED — FINAL RESULTS';s.style.color='#f87171';}
+  else{s.textContent='⏳ TOURNAMENT HASN\'T STARTED';s.style.color='#facc15';}
+  fadeMusic(0.1,500);
+  show('s-tournament');
+  loadTournamentLB();
+}
+
+function closeTournament(){show('s-game');fadeMusic(0.15,500);resetFishing();}
+
+async function loadTournamentLB(){
+  $('tourn-lb-list').innerHTML='<span style="color:#334155;font-family:Orbitron,monospace;font-size:.62rem;letter-spacing:2px;">Loading...</span>';
+  $('tourn-empire-banner').innerHTML='';
+  $('tourn-count').textContent='';
+  try{
+    const r=await fetch(TOURN_FB);const data=await r.json();
+    if(!data){
+      $('tourn-lb-list').innerHTML='<span style="color:#334155;font-family:Orbitron,monospace;font-size:.65rem;letter-spacing:2px;">No entries yet — be the first!</span>';
+      $('tourn-count').textContent='0 / 25 entries';
+      return;
+    }
+    // Filter to tournament window only, deduplicate (best per name+period)
+    const best={};
+    Object.values(data).forEach(e=>{
+      if(!e.name||e.score==null)return;
+      if(e.ts<TOURN_START||e.ts>TOURN_END)return;
+      const key=e.name.toLowerCase().trim()+'|'+(e.period||'');
+      if(!best[key]||e.score>best[key].score)best[key]=e;
+    });
+    const scores=Object.values(best).sort((a,b)=>b.score-a.score).slice(0,25);
+    $('tourn-count').textContent=scores.length+' / 25 entries';
+
+    // Empire battle: count which period has most players in top 10
+    const top10=scores.slice(0,10);
+    const ec={};
+    top10.forEach(e=>{if(e.period){ec[e.period]=(ec[e.period]||0)+1;}});
+    let lead=null,leadCt=0;
+    Object.entries(ec).forEach(([p,c])=>{if(c>leadCt){leadCt=c;lead=p;}});
+
+    if(lead){
+      const col=EMPIRE_COLORS[lead]||'#ffd700';
+      $('tourn-empire-banner').innerHTML=`
+        <div style="background:rgba(0,0,0,.4);border:2px solid ${col};border-radius:14px;padding:12px 20px;text-align:center;margin-bottom:2px;">
+          <div style="font-family:Orbitron,monospace;font-size:.48rem;letter-spacing:4px;color:#334155;margin-bottom:4px;">👑 TOP 10 LEADING EMPIRE</div>
+          <div style="font-family:Cinzel,serif;font-size:1.35rem;font-weight:700;color:${col};text-shadow:0 0 22px ${col}99;">${EMPIRE_NAMES[lead]||lead}</div>
+          <div style="font-family:Orbitron,monospace;font-size:.6rem;color:${col};margin-top:3px;">${leadCt} of ${Math.min(10,scores.length)} top spots · WINS THE TOURNAMENT REWARD</div>
+        </div>`;
+    }
+
+    const medals=['🥇','🥈','🥉'];
+    if(!scores.length){
+      $('tourn-lb-list').innerHTML='<span style="color:#334155;">No entries yet!</span>';
+      return;
+    }
+    $('tourn-lb-list').innerHTML=scores.map((s,i)=>{
+      const col=EMPIRE_COLORS[s.period]||'#64748b';
+      const rnk=i<3?`<span style="font-size:1.1rem;">${medals[i]}</span>`:(i+1);
+      return`<div class="tourn-row${i<3?' tourn-podium':''}">
+        <div class="tourn-rank">${rnk}</div>
+        <div class="tourn-name">${s.name}</div>
+        <div class="tourn-period" style="color:${col};">${s.period||'—'}</div>
+        <div class="tourn-score">$${s.score}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    dbg('Tourn LB err:',e.message);
+    $('tourn-lb-list').innerHTML='<span style="color:#334155;">Could not load — check connection.</span>';
+  }
+}
+
 async function loadFinalLB(){
   try{
     const r=await fetch(FB+'/scores.json');const data=await r.json();
